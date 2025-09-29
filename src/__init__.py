@@ -1,1 +1,1 @@
-
+"""Incident console application package."""
