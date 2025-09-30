@@ -38,6 +38,7 @@ scripts/
 
 ## 애플리케이션 실행
 가상환경이 활성화된 셸에서 아래 명령을 실행합니다.
+윈도우의 경우 powershell에서 수행합니다.
 ```bash
 python -m src.main
 ```

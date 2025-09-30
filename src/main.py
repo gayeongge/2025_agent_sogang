@@ -1,6 +1,6 @@
 """Incident console application entrypoint."""
 
-from incident_console.app import run_app
+from src.incident_console.app import run_app
 
 
 def main() -> None:
