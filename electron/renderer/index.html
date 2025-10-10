@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Incident Response Console</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <main class="main-pane">
+        <header class="hero">
+          <span class="hero-chip">Live Ops Desk</span>
+          <h1>Ops Mission Control</h1>
+          <p>Prometheus &middot; Slack &middot; Jira</p>
+        </header>
+
+        <section class="card status-card">
+          <div class="card-header">
+            <h2>Monitoring Snapshot</h2>
+            <button id="verifyButton" class="secondary">Verify Now</button>
+          </div>
+          <div class="metric-grid">
+            <article class="metric-pill" id="httpMetric">
+              <header>HTTP Error Rate</header>
+              <strong class="metric-value">--</strong>
+              <span class="metric-threshold">threshold 0.05</span>
+            </article>
+            <article class="metric-pill" id="cpuMetric">
+              <header>CPU Usage</header>
+              <strong class="metric-value">--</strong>
+              <span class="metric-threshold">threshold 0.80</span>
+            </article>
+          </div>
+          <button id="sampleToggle" class="ghost small">샘플 이력 보기</button>
+          <div id="sampleContainer" class="sample-container" data-open="false">
+            <ul id="sampleList" class="sample-list"></ul>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Recent Incidents</h2>
+          <ul id="alertList" class="list"></ul>
+        </section>
+
+        <section class="card analysis-card">
+          <h2>Incident Analysis</h2>
+          <div id="analysisContent" class="analysis-block">
+            아직 분석된 보고서가 없습니다.
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>System Feed</h2>
+          </div>
+          <div id="systemFeed" class="feed"></div>
+        </section>
+      </main>
+
+      <aside class="side-pane">
+        <section class="card preferences-card">
+          <h2>자동 알림 대상</h2>
+          <label class="toggle">
+            <input type="checkbox" id="notifySlack" checked />
+            <span>Slack</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="notifyJira" checked />
+            <span>Jira</span>
+          </label>
+          <p class="toggle-hint">선택한 메신저로 자동 보고서를 전송합니다.</p>
+        </section>
+
+        <nav class="tab-bar" role="tablist">
+          <button class="tab active" data-tab="slack" role="tab">Slack</button>
+          <button class="tab" data-tab="jira" role="tab">Jira</button>
+          <button class="tab" data-tab="prometheus" role="tab">Prometheus</button>
+        </nav>
+
+        <section class="tab-content active" id="tab-slack" role="tabpanel">
+          <h2>Slack Integration</h2>
+          <form id="slackForm" class="form-grid">
+            <label>Bot Token<input type="password" id="slackToken" autocomplete="off" required /></label>
+            <label>Workspace<input type="text" id="slackWorkspace" placeholder="example.slack.com" /></label>
+            <label>Default Channel
+              <select id="slackChannel">
+                <option value="#ops-incident">#ops-incident</option>
+                <option value="#eng-incident">#eng-incident</option>
+                <option value="#site-reliability">#site-reliability</option>
+              </select>
+            </label>
+            <div class="button-row">
+              <button type="button" id="slackTest" class="ghost">Test</button>
+              <button type="button" id="slackSave" class="primary">Save</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="tab-content" id="tab-jira" role="tabpanel">
+          <h2>Jira Integration</h2>
+          <form id="jiraForm" class="form-grid">
+            <label>Site URL<input type="url" id="jiraSite" placeholder="https://your-domain.atlassian.net" required /></label>
+            <label>Project Key<input type="text" id="jiraProject" placeholder="OPS" required /></label>
+            <label>Account Email<input type="email" id="jiraEmail" placeholder="oncall@example.com" required /></label>
+            <label>API Token<input type="password" id="jiraToken" autocomplete="off" required /></label>
+            <div class="button-row">
+              <button type="button" id="jiraTest" class="ghost">Test</button>
+              <button type="button" id="jiraSave" class="primary">Save</button>
+            </div>
+          </form>
+          <button type="button" id="jiraCreate" class="secondary wide">Create Jira Issue</button>
+        </section>
+
+        <section class="tab-content" id="tab-prometheus" role="tabpanel">
+          <h2>Prometheus Integration</h2>
+          <form id="promForm" class="form-grid">
+            <label>Base URL<input type="url" id="promUrl" placeholder="https://prometheus.internal" required /></label>
+            <label>HTTP Error Query<input type="text" id="promHttpQuery" placeholder="http_error_rate" required /></label>
+            <label>HTTP Threshold<input type="text" id="promHttpThreshold" value="0.05" /></label>
+            <label>CPU Usage Query<input type="text" id="promCpuQuery" placeholder="cpu_usage" required /></label>
+            <label>CPU Threshold<input type="text" id="promCpuThreshold" value="0.80" /></label>
+            <div class="button-row">
+              <button type="button" id="promTest" class="ghost">Test</button>
+              <button type="button" id="promSave" class="primary">Save</button>
+            </div>
+          </form>
+        </section>
+      </aside>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+    <div id="reportModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <header class="modal-header">
+          <div>
+            <h3 id="modalTitle">보고서 전송 미완료</h3>
+            <span id="modalTimestamp" class="modal-subtitle"></span>
+          </div>
+          <span id="modalStatus" class="modal-status">자동 감지됨</span>
+        </header>
+        <div id="modalReport" class="modal-report">보고서 내용이 준비 중입니다.</div>
+        <p id="modalHint" class="modal-hint"></p>
+        <div class="modal-actions">
+          <button id="modalClose" class="primary">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js" defer></script>
+  </body>
+</html>

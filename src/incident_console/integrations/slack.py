@@ -6,7 +6,7 @@ from typing import Dict, Optional
 
 import requests
 
-from ..async_tasks import IntegrationError
+from ..errors import IntegrationError
 
 
 class SlackIntegration:

@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import requests
 from requests.auth import HTTPBasicAuth
 
-from ..async_tasks import IntegrationError
+from ..errors import IntegrationError
 
 
 class JiraIntegration:

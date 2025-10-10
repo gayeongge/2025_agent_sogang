@@ -5,10 +5,8 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal
+from .errors import IntegrationError
 
-
-class IntegrationError(RuntimeError):
-    """외부 연동 실패를 표현하는 예외."""
 
 
 class WorkerSignals(QObject):
