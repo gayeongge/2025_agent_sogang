@@ -8,8 +8,6 @@ prometheus/dist/
 # Platform-specific bundles
 prometheus/windows/
 prometheus/mac/
-
-# Generated data
 prometheus/data/
 
 # Python bytecode

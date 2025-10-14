@@ -67,7 +67,7 @@ def _call_openai(prompt: str) -> Dict[str, object] | None:
 
     client = OpenAI(api_key=api_key)
     response = client.responses.create(
-        model="gpt-4.1-mini",
+        model="gpt-4o-mini",
         temperature=0.3,
         max_output_tokens=900,
         input=[
