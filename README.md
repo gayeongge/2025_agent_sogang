@@ -28,6 +28,10 @@ scripts/
   setup_env.py                    # Creates venv and installs Python dependencies
 ```
 
+## Operator Guides
+
+- See `SETUP.md` for platform-specific setup, launch, and UI guidance.
+
 ## Prerequisites
 
 - Python 3.10+
