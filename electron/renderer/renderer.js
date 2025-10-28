@@ -46,6 +46,15 @@
     modalReport: $('#modalReport'),
     modalHint: $('#modalHint'),
     modalClose: $('#modalClose'),
+    actionResults: $('#actionResults'),
+    actionModal: $('#actionModal'),
+    actionModalTitle: $('#actionModalTitle'),
+    actionModalSubtitle: $('#actionModalSubtitle'),
+    actionModalStatus: $('#actionModalStatus'),
+    actionModalList: $('#actionModalList'),
+    actionModalHint: $('#actionModalHint'),
+    actionModalApprove: $('#actionModalApprove'),
+    actionModalLater: $('#actionModalLater'),
   };
 
   const tabs = $$('.tab');
@@ -59,6 +68,12 @@
   let lastSavedPreferences = { slack: true, jira: true };
   let activeReport = null;
   let toastTimer = null;
+  const STATUS_LABELS = {
+    executed: '실행 완료',
+    pending: '승인 대기',
+    deferred: '보류됨',
+  };
+  let activeActionExecution = null;
 
   const escapeHtml = (value) => {
     if (typeof value !== 'string') {
@@ -202,6 +217,8 @@
     renderAlerts(state.alert_history);
     renderFeed(state.feed);
     renderAnalysis(state);
+    renderActionResults(state.action_executions);
+    handleActionQueue(state.action_executions);
     handlePendingReports(state.pending_reports);
   };
 
@@ -473,6 +490,217 @@
     }
 
     container.textContent = '아직 분석된 보고서가 없습니다.';
+  };
+
+  const renderActionResults = (executions) => {
+    const container = elements.actionResults;
+    if (!container) {
+      return;
+    }
+    const list = Array.isArray(executions) ? executions.slice().reverse() : [];
+    if (!list.length) {
+      container.classList.add('empty');
+      container.textContent = '아직 승인된 조치 실행 내역이 없습니다.';
+      return;
+    }
+    container.classList.remove('empty');
+    container.innerHTML = '';
+    list.forEach((execution) => {
+      if (!execution) {
+        return;
+      }
+      const entry = document.createElement('article');
+      entry.className = 'action-entry';
+      const status = (execution.status || 'pending').toLowerCase();
+      entry.dataset.status = status;
+
+      const header = document.createElement('header');
+      const title = document.createElement('span');
+      title.textContent = execution.scenario_title || '조치 계획';
+      const badge = document.createElement('span');
+      badge.className = 'status-badge';
+      badge.dataset.status = status;
+      badge.textContent = STATUS_LABELS[status] || status;
+      header.appendChild(title);
+      header.appendChild(badge);
+      entry.appendChild(header);
+
+      const createdAt = formatDate(execution.created_at);
+      const executedAt = execution.executed_at ? formatDate(execution.executed_at) : '';
+      const meta = document.createElement('div');
+      meta.className = 'action-meta';
+      meta.textContent = executedAt
+        ? `요청 ${createdAt} · 실행 ${executedAt}`
+        : `요청 ${createdAt}`;
+      entry.appendChild(meta);
+
+      const actions = Array.isArray(execution.actions) ? execution.actions : [];
+      if (actions.length) {
+        const actionList = document.createElement('ul');
+        actions.forEach((action) => {
+          const item = document.createElement('li');
+          item.textContent = action;
+          actionList.appendChild(item);
+        });
+        entry.appendChild(actionList);
+      } else {
+        const emptyNotice = document.createElement('div');
+        emptyNotice.className = 'action-meta';
+        emptyNotice.textContent = '등록된 조치 항목이 없습니다.';
+        entry.appendChild(emptyNotice);
+      }
+
+      const results = Array.isArray(execution.results) ? execution.results : [];
+      if (results.length) {
+        const resultsWrapper = document.createElement('div');
+        resultsWrapper.className = 'action-result-list';
+        results.forEach((result) => {
+          if (!result) {
+            return;
+          }
+          const resultBlock = document.createElement('div');
+          resultBlock.className = 'action-result';
+          const titleEl = document.createElement('strong');
+          titleEl.textContent = result.action || '조치';
+          const statusLine = document.createElement('span');
+          const statusLabel = result.status || '결과 확인';
+          const timeLabel = formatDate(result.executed_at);
+          statusLine.textContent = timeLabel ? `${statusLabel} · ${timeLabel}` : statusLabel;
+          resultBlock.appendChild(titleEl);
+          resultBlock.appendChild(statusLine);
+          if (result.detail) {
+            const detailLine = document.createElement('span');
+            detailLine.className = 'action-meta';
+            detailLine.textContent = result.detail;
+            resultBlock.appendChild(detailLine);
+          }
+          resultsWrapper.appendChild(resultBlock);
+        });
+        entry.appendChild(resultsWrapper);
+      }
+
+      container.appendChild(entry);
+    });
+  };
+
+  const showActionModal = (execution) => {
+    const modal = elements.actionModal;
+    if (!modal || !execution) {
+      return;
+    }
+    activeActionExecution = execution;
+    modal.classList.remove('hidden');
+
+    if (elements.actionModalTitle) {
+      elements.actionModalTitle.textContent =
+        execution.scenario_title || '조치 실행 승인';
+    }
+    if (elements.actionModalSubtitle) {
+      elements.actionModalSubtitle.textContent = formatDate(execution.created_at);
+    }
+    if (elements.actionModalStatus) {
+      elements.actionModalStatus.textContent = STATUS_LABELS.pending;
+      elements.actionModalStatus.dataset.status = 'pending';
+    }
+    if (elements.actionModalList) {
+      elements.actionModalList.innerHTML = '';
+      const actions = Array.isArray(execution.actions) ? execution.actions : [];
+      if (actions.length) {
+        const ordered = document.createElement('ol');
+        ordered.className = 'modal-ordered';
+        actions.forEach((action) => {
+          const item = document.createElement('li');
+          item.textContent = action;
+          ordered.appendChild(item);
+        });
+        elements.actionModalList.appendChild(ordered);
+      } else {
+        const empty = document.createElement('p');
+        empty.textContent = '실행할 조치가 없습니다.';
+        elements.actionModalList.appendChild(empty);
+      }
+    }
+    if (elements.actionModalHint) {
+      elements.actionModalHint.textContent =
+        '확인을 누르면 조치 시뮬레이터 API를 호출하여 실행합니다.';
+    }
+  };
+
+  const hideActionModal = () => {
+    if (!elements.actionModal) {
+      return;
+    }
+    elements.actionModal.classList.add('hidden');
+  };
+
+  const handleActionQueue = (executions) => {
+    const queue = Array.isArray(executions) ? executions : [];
+    const next = queue.find((item) => item && item.status === 'pending');
+    if (!next) {
+      activeActionExecution = null;
+      hideActionModal();
+      return;
+    }
+    if (
+      activeActionExecution &&
+      activeActionExecution.id === next.id &&
+      elements.actionModal &&
+      !elements.actionModal.classList.contains('hidden')
+    ) {
+      showActionModal(next);
+      return;
+    }
+    showActionModal(next);
+  };
+
+  const handleActionApprove = async () => {
+    if (!activeActionExecution) {
+      hideActionModal();
+      return;
+    }
+    setBusy(elements.actionModalApprove, true);
+    if (elements.actionModalLater) {
+      elements.actionModalLater.setAttribute('disabled', 'disabled');
+    }
+    try {
+      await request(`/actions/${activeActionExecution.id}/execute`, { method: 'POST' });
+      showToast('조치 실행을 완료했습니다.');
+      hideActionModal();
+      activeActionExecution = null;
+      await refreshState({ silent: true });
+    } catch (error) {
+      showToast(error.message || '조치 실행에 실패했습니다.', 'error');
+    } finally {
+      setBusy(elements.actionModalApprove, false);
+      if (elements.actionModalLater) {
+        elements.actionModalLater.removeAttribute('disabled');
+      }
+    }
+  };
+
+  const handleActionLater = async () => {
+    if (!activeActionExecution) {
+      hideActionModal();
+      return;
+    }
+    setBusy(elements.actionModalLater, true);
+    if (elements.actionModalApprove) {
+      elements.actionModalApprove.setAttribute('disabled', 'disabled');
+    }
+    try {
+      await request(`/actions/${activeActionExecution.id}/defer`, { method: 'POST' });
+      showToast('조치 계획을 조치 결과 탭에 저장했습니다.', 'warn');
+      hideActionModal();
+      activeActionExecution = null;
+      await refreshState({ silent: true });
+    } catch (error) {
+      showToast(error.message || '조치 실행을 보류하는 데 실패했습니다.', 'error');
+    } finally {
+      setBusy(elements.actionModalLater, false);
+      if (elements.actionModalApprove) {
+        elements.actionModalApprove.removeAttribute('disabled');
+      }
+    }
   };
 
   const handlePendingReports = (reports) => {
@@ -914,6 +1142,12 @@
     }
     if (elements.modalClose) {
       elements.modalClose.addEventListener('click', handleModalClose);
+    }
+    if (elements.actionModalApprove) {
+      elements.actionModalApprove.addEventListener('click', handleActionApprove);
+    }
+    if (elements.actionModalLater) {
+      elements.actionModalLater.addEventListener('click', handleActionLater);
     }
   };
 

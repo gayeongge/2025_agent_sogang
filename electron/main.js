@@ -7,6 +7,7 @@ const http = require('http');
 let backendProcess;
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const BACKEND_HOST = process.env.INCIDENT_BACKEND_HOST || '127.0.0.1';
+// Electron 런처는 기본적으로 8000 포트에서 백엔드를 기동한다.
 const BACKEND_PORT = process.env.INCIDENT_BACKEND_PORT || '8000';
 const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
 process.env.INCIDENT_BACKEND_URL = BACKEND_URL;
@@ -52,6 +53,7 @@ function startBackend() {
     INCIDENT_BACKEND_HOST: BACKEND_HOST,
     INCIDENT_BACKEND_PORT: BACKEND_PORT,
     INCIDENT_BACKEND_RELOAD: '0',
+    PYTHONIOENCODING: 'utf-8',
   };
 
   backendProcess = spawn(python, ['-m', 'src.backend.main'], {

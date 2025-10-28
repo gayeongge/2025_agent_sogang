@@ -66,6 +66,31 @@ class IncidentReport:
 
 
 @dataclass
+class ActionExecutionResult:
+    """Outcome returned by the fake action executor."""
+
+    action: str
+    status: str
+    detail: str
+    executed_at: str
+
+
+@dataclass
+class ActionExecution:
+    """Pending or completed execution request for report action items."""
+
+    id: str
+    report_id: str
+    scenario_code: str
+    scenario_title: str
+    created_at: str
+    actions: List[str]
+    status: str = "pending"
+    executed_at: Optional[str] = None
+    results: List[ActionExecutionResult] = field(default_factory=list)
+
+
+@dataclass
 class AppState:
     """Mutable state shared across API requests."""
 
@@ -85,6 +110,7 @@ class AppState:
     )
     last_report: Optional[IncidentReport] = None
     pending_reports: List[IncidentReport] = field(default_factory=list)
+    action_executions: List[ActionExecution] = field(default_factory=list)
 
     def append_feed(self, message: str) -> None:
         self.feed.append(message)

@@ -6,7 +6,15 @@ import random
 from dataclasses import asdict
 from typing import Dict, List, Optional, Tuple
 
-from src.backend.state import STATE, STATE_LOCK
+from src.backend.state import (
+    STATE,
+    STATE_LOCK,
+    ActionExecution,
+    ActionExecutionResult,
+    IncidentReport,
+    MetricSample,
+    make_sample,
+)
 from src.incident_console.integrations.jira import JiraIntegration
 from src.incident_console.integrations.prometheus import PrometheusClient
 from src.incident_console.integrations.slack import SlackIntegration
@@ -17,7 +25,6 @@ from src.incident_console.models import (
     SlackSettings,
 )
 from src.incident_console.utils import parse_threshold, timestamp
-from src.backend.state import IncidentReport, MetricSample, make_sample
 
 
 class SlackService:
@@ -259,6 +266,10 @@ class AlertService:
                 "pending_reports": [
                     serialize_report(report) for report in STATE.pending_reports
                 ],
+                "action_executions": [
+                    serialize_action_execution(execution)
+                    for execution in STATE.action_executions
+                ],
             }
         return state_copy
 
@@ -313,6 +324,33 @@ def serialize_report(report: Optional[IncidentReport]) -> Optional[Dict[str, obj
         "follow_up": list(report.follow_up),
         "recipients_sent": list(report.recipients_sent),
         "recipients_missing": list(report.recipients_missing),
+    }
+
+
+def serialize_action_result(result: ActionExecutionResult) -> Dict[str, object]:
+    return {
+        "action": result.action,
+        "status": result.status,
+        "detail": result.detail,
+        "executed_at": result.executed_at,
+    }
+
+
+def serialize_action_execution(
+    execution: Optional[ActionExecution],
+) -> Optional[Dict[str, object]]:
+    if execution is None:
+        return None
+    return {
+        "id": execution.id,
+        "report_id": execution.report_id,
+        "scenario_code": execution.scenario_code,
+        "scenario_title": execution.scenario_title,
+        "created_at": execution.created_at,
+        "actions": list(execution.actions),
+        "status": execution.status,
+        "executed_at": execution.executed_at,
+        "results": [serialize_action_result(result) for result in execution.results],
     }
 
 

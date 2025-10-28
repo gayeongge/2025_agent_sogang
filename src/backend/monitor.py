@@ -7,6 +7,7 @@ import time
 import uuid
 from typing import List, Tuple
 
+from src.backend.actions import ActionExecutionService
 from src.backend.analysis import generate_incident_analysis
 from src.backend.services import AlertService, JiraService, PrometheusService, SlackService
 from src.backend.state import STATE, STATE_LOCK, IncidentReport, MetricSample, make_sample
@@ -27,11 +28,13 @@ class PrometheusMonitor:
         alert_service: AlertService,
         slack_service: SlackService,
         jira_service: JiraService,
+        action_service: ActionExecutionService,
     ) -> None:
         self._prom_service = prom_service
         self._alert_service = alert_service
         self._slack_service = slack_service
         self._jira_service = jira_service
+        self._action_service = action_service
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
 
@@ -95,6 +98,8 @@ class PrometheusMonitor:
             action_items=list(analysis.get("action_plan", [])) or list(scenario.actions),
             follow_up=list(analysis.get("follow_up", [])),
         )
+
+        self._action_service.queue_from_report(report)
 
         recipients_sent, recipients_missing = self._deliver_report(scenario, report_body)
         report.recipients_sent = recipients_sent

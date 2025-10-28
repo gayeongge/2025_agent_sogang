@@ -75,6 +75,7 @@
           <button class="tab active" data-tab="slack" role="tab">Slack</button>
           <button class="tab" data-tab="jira" role="tab">Jira</button>
           <button class="tab" data-tab="prometheus" role="tab">Prometheus</button>
+          <button class="tab" data-tab="actions" role="tab">조치 결과</button>
         </nav>
 
         <section class="tab-content active" id="tab-slack" role="tabpanel">
@@ -125,6 +126,13 @@
             </div>
           </form>
         </section>
+
+        <section class="tab-content" id="tab-actions" role="tabpanel">
+          <h2>조치 결과</h2>
+          <div id="actionResults" class="action-results empty">
+            아직 승인된 조치 실행 내역이 없습니다.
+          </div>
+        </section>
       </aside>
     </div>
 
@@ -142,6 +150,28 @@
         <p id="modalHint" class="modal-hint"></p>
         <div class="modal-actions">
           <button id="modalClose" class="primary">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="actionModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <header class="modal-header">
+          <div>
+            <h3 id="actionModalTitle">조치 실행 승인</h3>
+            <span id="actionModalSubtitle" class="modal-subtitle"></span>
+          </div>
+          <span id="actionModalStatus" class="modal-status">승인 대기</span>
+        </header>
+        <div id="actionModalList" class="modal-report">
+          <p>조치 목록을 불러오는 중입니다.</p>
+        </div>
+        <p id="actionModalHint" class="modal-hint">
+          조치 실행을 승인하면 시뮬레이터 API를 호출하여 자동으로 처리합니다.
+        </p>
+        <div class="modal-actions">
+          <button id="actionModalLater" class="ghost">나중에</button>
+          <button id="actionModalApprove" class="primary">확인</button>
         </div>
       </div>
     </div>

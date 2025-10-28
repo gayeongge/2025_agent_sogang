@@ -6,12 +6,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from src.backend.actions import ActionExecutionService
+from src.backend.fake_actions_api import fake_actions_app
 from src.backend.monitor import PrometheusMonitor
 from src.backend.services import (
     AlertService,
     JiraService,
     PrometheusService,
     SlackService,
+    serialize_action_execution,
 )
 from src.backend.state import STATE, STATE_LOCK
 from src.incident_console.errors import IntegrationError
@@ -21,7 +24,14 @@ slack_service = SlackService()
 jira_service = JiraService()
 prom_service = PrometheusService()
 alert_service = AlertService()
-monitor = PrometheusMonitor(prom_service, alert_service, slack_service, jira_service)
+action_service = ActionExecutionService()
+monitor = PrometheusMonitor(
+    prom_service,
+    alert_service,
+    slack_service,
+    jira_service,
+    action_service,
+)
 
 
 class SlackSettingsPayload(BaseModel):
@@ -61,6 +71,7 @@ class NotificationPreferencePayload(BaseModel):
 
 
 app = FastAPI(title="Incident Response Console Backend", version="0.2.0")
+app.mount("/action-simulator", fake_actions_app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -200,6 +211,18 @@ def update_notification_preferences(
             "jira": STATE.preferences.jira,
         }
     return current
+
+
+@app.post("/actions/{execution_id}/execute")
+def execute_action_plan(execution_id: str) -> dict[str, object]:
+    execution = _handle_errors(lambda: action_service.execute_pending(execution_id))
+    return {"execution": serialize_action_execution(execution)}
+
+
+@app.post("/actions/{execution_id}/defer")
+def defer_action_plan(execution_id: str) -> dict[str, object]:
+    execution = _handle_errors(lambda: action_service.defer_execution(execution_id))
+    return {"execution": serialize_action_execution(execution)}
 
 
 @app.post("/notifications/pending/{report_id}/ack")
