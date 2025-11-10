@@ -37,6 +37,9 @@
     promCpuThreshold: $('#promCpuThreshold'),
     promTest: $('#promTest'),
     promSave: $('#promSave'),
+    ragRefresh: $('#ragRefresh'),
+    ragStatus: $('#ragStatus'),
+    ragTable: $('#ragTable'),
     toast: $('#toast'),
     analysisContent: $('#analysisContent'),
     modal: $('#reportModal'),
@@ -69,11 +72,26 @@
   let activeReport = null;
   let toastTimer = null;
   const STATUS_LABELS = {
-    executed: '실행 완료',
-    pending: '승인 대기',
-    deferred: '보류됨',
+    executed: 'Executed',
+    pending: 'Pending',
+    deferred: 'Deferred',
+  };
+  const RAG_STATUS_LABELS = {
+    executed: 'Approved',
+    deferred: 'Deferred',
+    report: 'Report',
+    reference: 'Reference',
+  };
+  const RAG_STATUS_CLASS = {
+    executed: 'rag-pill--executed',
+    deferred: 'rag-pill--deferred',
+    report: 'rag-pill--report',
+    reference: 'rag-pill--reference',
   };
   let activeActionExecution = null;
+  let activeTab = 'slack';
+  let ragLoaded = false;
+  let ragLoading = false;
 
   const escapeHtml = (value) => {
     if (typeof value !== 'string') {
@@ -191,6 +209,11 @@
     try {
       const state = await request('/state');
       renderState(state);
+      if (activeTab === 'rag') {
+        await loadRagData({ force: true, silent: true });
+      } else {
+        ragLoaded = false;
+      }
     } catch (error) {
       if (!silent) {
         showToast(error.message || '상태를 불러오지 못했습니다.', 'error');
@@ -582,6 +605,109 @@
       container.appendChild(entry);
     });
   };
+
+  const renderRagDocuments = (documents = []) => {
+    const statusEl = elements.ragStatus;
+    const table = elements.ragTable;
+    if (!statusEl || !table) {
+      return;
+    }
+    const body = table.querySelector('tbody');
+    if (!body) {
+      return;
+    }
+    body.innerHTML = '';
+    if (!Array.isArray(documents) || !documents.length) {
+      statusEl.textContent = 'No RAG records found.';
+      table.classList.add('hidden');
+      return;
+    }
+    statusEl.textContent = `${documents.length} RAG record(s) available.`;
+    documents.forEach((doc) => {
+      if (!doc) {
+        return;
+      }
+      const metadata = doc.metadata && typeof doc.metadata === 'object' ? doc.metadata : {};
+      const title = metadata.title || doc.title || 'Untitled';
+      const scenarioCode = metadata.scenario_code || doc.scenario_code || '--';
+      const statusKey = String(metadata.status || doc.status || 'reference').toLowerCase();
+      const statusLabel = RAG_STATUS_LABELS[statusKey] || statusKey;
+      const statusClass = RAG_STATUS_CLASS[statusKey] || 'rag-pill--reference';
+      const createdAt = formatDate(metadata.created_at || doc.created_at || '');
+      const summaryRaw = metadata.summary || doc.summary || '';
+      const summary =
+        typeof summaryRaw === 'string' && summaryRaw.length > 160
+          ? `${summaryRaw.slice(0, 157)}…`
+          : summaryRaw;
+      const typeLabel = metadata.type || doc.type || '';
+
+      const row = document.createElement('tr');
+
+      const titleCell = document.createElement('td');
+      titleCell.textContent = title;
+      if (typeLabel) {
+        const tag = document.createElement('span');
+        tag.className = 'rag-type';
+        tag.textContent = typeLabel;
+        titleCell.appendChild(document.createElement('br'));
+        titleCell.appendChild(tag);
+      }
+      row.appendChild(titleCell);
+
+      const scenarioCell = document.createElement('td');
+      scenarioCell.textContent = scenarioCode;
+      row.appendChild(scenarioCell);
+
+      const statusCell = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = `rag-pill ${statusClass}`;
+      badge.textContent = statusLabel;
+      statusCell.appendChild(badge);
+      row.appendChild(statusCell);
+
+      const createdCell = document.createElement('td');
+      createdCell.textContent = createdAt || '--';
+      row.appendChild(createdCell);
+
+      const summaryCell = document.createElement('td');
+      summaryCell.textContent = summary || '--';
+      row.appendChild(summaryCell);
+
+      body.appendChild(row);
+    });
+    table.classList.remove('hidden');
+  };
+
+  const loadRagData = async ({ force = false, silent = false } = {}) => {
+    if (!elements.ragTable) {
+      return;
+    }
+    if (ragLoading) {
+      return;
+    }
+    if (!force && ragLoaded) {
+      return;
+    }
+    ragLoading = true;
+    try {
+      const response = await request('/rag/documents');
+      const docsSource = response && response.documents;
+      const documents = Array.isArray(docsSource)
+        ? docsSource
+        : docsSource
+        ? Object.values(docsSource)
+        : [];
+      renderRagDocuments(documents);
+      ragLoaded = true;
+    } catch (error) {
+      if (!silent) {
+        showToast(error.message || 'Failed to load RAG data.', 'error');
+      }
+    } finally {
+      ragLoading = false;
+    }
+  };
+
 
   const showActionModal = (execution) => {
     const modal = elements.actionModal;
@@ -1051,17 +1177,24 @@
       return;
     }
     const isOpen = elements.sampleContainer.dataset.open === 'true';
-    elements.sampleToggle.textContent = isOpen ? '샘플 이력 숨기기' : '샘플 이력 보기';
+    elements.sampleToggle.textContent = isOpen ? 'Hide Samples' : 'Show Samples';
     elements.sampleToggle.setAttribute('aria-expanded', String(isOpen));
   };
 
   const switchTab = (name) => {
+    if (!name) {
+      return;
+    }
+    activeTab = name;
     tabs.forEach((tab) => {
-      tab.classList.toggle('active', tab.dataset.tab === name);
+      tab.classList.toggle('active', tab.dataset.tab === activeTab);
     });
     tabPanels.forEach((panel) => {
-      panel.classList.toggle('active', panel.id === `tab-${name}`);
+      panel.classList.toggle('active', panel.id === `tab-${activeTab}`);
     });
+    if (activeTab === 'rag') {
+      loadRagData();
+    }
   };
 
   const bindEvents = () => {
@@ -1073,6 +1206,12 @@
         }
       });
     });
+
+    if (elements.ragRefresh) {
+      elements.ragRefresh.addEventListener('click', () => {
+        loadRagData({ force: true });
+      });
+    }
 
     if (elements.verifyButton) {
       elements.verifyButton.addEventListener('click', handleVerify);

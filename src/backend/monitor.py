@@ -9,6 +9,7 @@ from typing import List, Tuple
 
 from src.backend.actions import ActionExecutionService
 from src.backend.analysis import generate_incident_analysis
+from src.backend.rag import rag_service
 from src.backend.services import AlertService, JiraService, PrometheusService, SlackService
 from src.backend.state import STATE, STATE_LOCK, IncidentReport, MetricSample, make_sample
 from src.incident_console.errors import IntegrationError
@@ -104,6 +105,8 @@ class PrometheusMonitor:
         recipients_sent, recipients_missing = self._deliver_report(scenario, report_body)
         report.recipients_sent = recipients_sent
         report.recipients_missing = recipients_missing
+
+        rag_service.record_incident_report(report)
 
         feed_message = self._build_feed_message(sample, recipients_sent, recipients_missing)
         self._alert_service.record_incident(scenario, report, feed_message)

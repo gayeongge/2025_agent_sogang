@@ -76,6 +76,7 @@
           <button class="tab" data-tab="jira" role="tab">Jira</button>
           <button class="tab" data-tab="prometheus" role="tab">Prometheus</button>
           <button class="tab" data-tab="actions" role="tab">조치 결과</button>
+          <button class="tab" data-tab="rag" role="tab">RAG Data</button>
         </nav>
 
         <section class="tab-content active" id="tab-slack" role="tabpanel">
@@ -132,6 +133,26 @@
           <div id="actionResults" class="action-results empty">
             아직 승인된 조치 실행 내역이 없습니다.
           </div>
+        </section>
+
+        <section class="tab-content" id="tab-rag" role="tabpanel">
+          <div class="rag-header">
+            <h2>RAG Data</h2>
+            <button type="button" id="ragRefresh" class="ghost small">Refresh</button>
+          </div>
+          <p id="ragStatus" class="rag-status">No RAG records yet.</p>
+          <table id="ragTable" class="rag-table hidden">
+            <thead>
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Scenario</th>
+                <th scope="col">Status</th>
+                <th scope="col">Recorded</th>
+                <th scope="col">Summary</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </section>
       </aside>
     </div>

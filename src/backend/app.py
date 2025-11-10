@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from src.backend.actions import ActionExecutionService
 from src.backend.fake_actions_api import fake_actions_app
 from src.backend.monitor import PrometheusMonitor
+from src.backend.rag import rag_service
 from src.backend.services import (
     AlertService,
     JiraService,
@@ -32,6 +33,7 @@ monitor = PrometheusMonitor(
     jira_service,
     action_service,
 )
+rag_service.bootstrap_scenarios(STATE.scenarios)
 
 
 class SlackSettingsPayload(BaseModel):
@@ -109,6 +111,11 @@ def health() -> dict[str, str]:
 @app.get("/state")
 def get_state() -> dict[str, object]:
     return alert_service.get_state()
+
+
+@app.get("/rag/documents")
+def get_rag_documents() -> dict[str, object]:
+    return {"documents": rag_service.list_documents()}
 
 
 @app.post("/alerts/trigger")

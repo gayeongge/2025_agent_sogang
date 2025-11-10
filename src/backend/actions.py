@@ -12,6 +12,7 @@ import requests
 import uvicorn
 
 from src.backend.fake_actions_api import fake_actions_app
+from src.backend.rag import rag_service
 from src.backend.state import (
     STATE,
     STATE_LOCK,
@@ -163,6 +164,7 @@ class ActionExecutionService:
                     f"Executed {len(results)} action(s) for {execution.scenario_title}"
                 )
             )
+        rag_service.record_action_execution(execution)
         return execution
 
     def defer_execution(self, execution_id: str) -> ActionExecution:
@@ -178,6 +180,7 @@ class ActionExecutionService:
                     f"Stored action plan for manual review ({execution.scenario_title})"
                 )
             )
+        rag_service.record_action_deferred(execution)
         return execution
 
     def _require_execution(self, execution_id: str) -> ActionExecution:

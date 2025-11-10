@@ -1,0 +1,1006 @@
+[
+  {
+    "doc_key": "scenario:http_5xx_surge",
+    "content": "시나리오: Nginx 5xx surge on checkout API (http_5xx_surge)\n원인 지표: Prometheus http_error_rate\n설명: http_error_rate exceeded threshold triggering Slack notification\n우선 가설:\n- Recent deploy introduced regression in request validation\n- Upstream payment provider timeout cascading to gateway\n- Auto-scaling group missing warm instances causing cold start failures\n추천 조치:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n관련 증거:\n- http_error_rate > 12% over 5m\n- Deployment build #20250925.3 rolled out 5 min before alert\n- Gateway pods restarted 3 times within 10m",
+    "created_at": "2025-11-10T00:49:22+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident",
+    "scenario_code": "http_5xx_surge",
+    "status": "reference",
+    "type": "scenario",
+    "metadata": {
+      "type": "scenario",
+      "scenario_code": "http_5xx_surge",
+      "status": "reference",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident",
+      "created_at": "2025-11-10T00:49:22+00:00",
+      "doc_key": "scenario:http_5xx_surge"
+    }
+  },
+  {
+    "doc_key": "scenario:cpu_spike_core",
+    "content": "시나리오: Edge node CPU spike (cpu_spike_core)\n원인 지표: Prometheus cpu_usage\n설명: cpu_usage exceeded 90% triggering Jira incident\n우선 가설:\n- Ashburn edge node receiving concentrated traffic burst\n- New Prometheus scrape job running hot due to misconfigured interval\n- Background batch job pinned to shared core\n추천 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n관련 증거:\n- cpu_usage >= 92% for 10 mins on edge-node-03\n- Load balancer sticky sessions skewed toward node\n- No matching deployment in the change log",
+    "created_at": "2025-11-10T00:49:22+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility",
+    "scenario_code": "cpu_spike_core",
+    "status": "reference",
+    "type": "scenario",
+    "metadata": {
+      "type": "scenario",
+      "scenario_code": "cpu_spike_core",
+      "status": "reference",
+      "title": "Edge node CPU spike",
+      "summary": "Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility",
+      "created_at": "2025-11-10T00:49:22+00:00",
+      "doc_key": "scenario:cpu_spike_core"
+    }
+  },
+  {
+    "doc_key": "action_execution:0245aa19-46eb-4958-b21e-6f9e3938d3c1:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T01:03:57+00:00\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-10T01:03:57+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-10T01:03:57+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-10T01:03:57+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T01:03:57+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T01:03:57+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:03:57+00:00",
+      "doc_key": "action_execution:0245aa19-46eb-4958-b21e-6f9e3938d3c1:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:1d24f038-1321-49a3-87a0-3e96b8652c69",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T01:25:16+00:00\n\n요약:\n2025-11-10T01:25:16+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.43까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:25:16+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T01:25:16+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.43까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T01:25:16+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.43까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:25:16+00:00",
+      "doc_key": "incident_report:1d24f038-1321-49a3-87a0-3e96b8652c69"
+    }
+  },
+  {
+    "doc_key": "action_execution:d80c3f35-bfd2-4fdb-8e6a-e646b8a74672:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T01:25:24+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T01:25:24+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T01:25:24+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T01:25:24+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T01:25:24+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T01:25:24+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:25:24+00:00",
+      "doc_key": "action_execution:d80c3f35-bfd2-4fdb-8e6a-e646b8a74672:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:e5fe28c7-101e-4e8f-8750-7fbc2a276f1b",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T01:26:06+00:00\n\n요약:\n2025-11-10T01:26:06+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.93까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:26:06+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T01:26:06+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.93까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T01:26:06+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.93까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:26:06+00:00",
+      "doc_key": "incident_report:e5fe28c7-101e-4e8f-8750-7fbc2a276f1b"
+    }
+  },
+  {
+    "doc_key": "action_execution:ce6adc93-851e-4e84-bdb0-4f102a9dc586:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-10T01:26:16+00:00\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "created_at": "2025-11-10T01:26:16+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:26:16+00:00",
+      "doc_key": "action_execution:ce6adc93-851e-4e84-bdb0-4f102a9dc586:deferred"
+    }
+  },
+  {
+    "doc_key": "incident_report:4e216873-baaa-4dcd-819b-baf265fbf4b2",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T01:37:22+00:00\n\n요약:\n2025-11-10T01:37:22+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.87까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:37:22+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T01:37:22+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.87까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T01:37:22+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.87까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:37:22+00:00",
+      "doc_key": "incident_report:4e216873-baaa-4dcd-819b-baf265fbf4b2"
+    }
+  },
+  {
+    "doc_key": "action_execution:5b5ece19-1f58-476d-a95b-9d5fb8e9f99b:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-10T01:37:30+00:00\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "created_at": "2025-11-10T01:37:30+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:37:30+00:00",
+      "doc_key": "action_execution:5b5ece19-1f58-476d-a95b-9d5fb8e9f99b:deferred"
+    }
+  },
+  {
+    "doc_key": "incident_report:66816702-a4cb-40af-8f0a-6465e33f3e33",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T01:39:49+00:00\n\n요약:\n2025-11-10T01:39:49+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.92까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:39:49+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T01:39:49+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.92까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T01:39:49+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.92까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:39:49+00:00",
+      "doc_key": "incident_report:66816702-a4cb-40af-8f0a-6465e33f3e33"
+    }
+  },
+  {
+    "doc_key": "action_execution:db47fa74-4af9-45df-b726-63f2ee80bc79:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-10T01:39:55+00:00\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "created_at": "2025-11-10T01:39:55+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:39:55+00:00",
+      "doc_key": "action_execution:db47fa74-4af9-45df-b726-63f2ee80bc79:deferred"
+    }
+  },
+  {
+    "doc_key": "incident_report:26151b39-b09e-40e9-a0fa-62b506a36564",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T01:41:05+00:00\n\n요약:\n2025-11-10T01:41:05+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.91까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:41:05+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T01:41:05+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.91까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T01:41:05+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.91까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:41:05+00:00",
+      "doc_key": "incident_report:26151b39-b09e-40e9-a0fa-62b506a36564"
+    }
+  },
+  {
+    "doc_key": "action_execution:2b942907-e8a2-4a5a-9e10-2c7458e66a70:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T01:41:08+00:00\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-10T01:41:08+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-10T01:41:08+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-10T01:41:08+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T01:41:08+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T01:41:08+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:41:08+00:00",
+      "doc_key": "action_execution:2b942907-e8a2-4a5a-9e10-2c7458e66a70:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:2c0c674b-7dcf-415e-a4ba-9ea87c52a7e7",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T01:52:49+00:00\n\n요약:\n2025-11-10T01:52:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.58까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:52:49+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T01:52:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.58까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T01:52:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.58까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:52:49+00:00",
+      "doc_key": "incident_report:2c0c674b-7dcf-415e-a4ba-9ea87c52a7e7"
+    }
+  },
+  {
+    "doc_key": "action_execution:99233f50-ea1f-45f3-9e6a-38a8fa9b6a2c:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T01:53:06+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T01:53:06+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T01:53:06+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T01:53:06+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T01:53:06+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T01:53:06+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:53:06+00:00",
+      "doc_key": "action_execution:99233f50-ea1f-45f3-9e6a-38a8fa9b6a2c:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:65c5eb70-944a-497c-8f4a-f69e6f4a4f7a",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T01:53:34+00:00\n\n요약:\n2025-11-10T01:53:34+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.86까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:53:34+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T01:53:34+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.86까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T01:53:34+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.86까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:53:34+00:00",
+      "doc_key": "incident_report:65c5eb70-944a-497c-8f4a-f69e6f4a4f7a"
+    }
+  },
+  {
+    "doc_key": "action_execution:208b441e-0273-4764-86da-bee918e525a8:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T01:53:50+00:00\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-10T01:53:50+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-10T01:53:50+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-10T01:53:50+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T01:53:50+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T01:53:50+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:53:50+00:00",
+      "doc_key": "action_execution:208b441e-0273-4764-86da-bee918e525a8:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:4d78a339-2d17-45c8-ac97-d47cfd15c5e6",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T01:56:05+00:00\n\n요약:\n2025-11-10T01:56:05+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.85까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:56:05+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T01:56:05+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.85까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T01:56:05+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.85까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:56:05+00:00",
+      "doc_key": "incident_report:4d78a339-2d17-45c8-ac97-d47cfd15c5e6"
+    }
+  },
+  {
+    "doc_key": "action_execution:ce397c9a-c703-4837-ba07-80a7d915aa02:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T01:56:41+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T01:56:41+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T01:56:41+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T01:56:41+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T01:56:41+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T01:56:41+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:56:41+00:00",
+      "doc_key": "action_execution:ce397c9a-c703-4837-ba07-80a7d915aa02:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:702bd85f-22fa-4e05-a3dd-5a08fef9a354",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T01:57:36+00:00\n\n요약:\n2025-11-10T01:57:36+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.50까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T01:57:36+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T01:57:36+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.50까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T01:57:36+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.50까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:57:36+00:00",
+      "doc_key": "incident_report:702bd85f-22fa-4e05-a3dd-5a08fef9a354"
+    }
+  },
+  {
+    "doc_key": "action_execution:82884f78-d6c6-4e13-be12-845defdd4c38:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T01:57:48+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T01:57:48+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T01:57:48+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T01:57:48+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T01:57:48+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T01:57:48+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T01:57:48+00:00",
+      "doc_key": "action_execution:82884f78-d6c6-4e13-be12-845defdd4c38:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:ccf46247-ff64-4138-ab8a-d80d5f988962",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T02:18:38+00:00\n\n요약:\n2025-11-10T02:18:38+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.95까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T02:18:38+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T02:18:38+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.95까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T02:18:38+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.95까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:18:38+00:00",
+      "doc_key": "incident_report:ccf46247-ff64-4138-ab8a-d80d5f988962"
+    }
+  },
+  {
+    "doc_key": "action_execution:db8880a9-2569-49e0-800e-f85601fba225:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T02:18:47+00:00\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-10T02:18:47+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-10T02:18:47+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-10T02:18:47+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T02:18:47+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T02:18:47+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:18:47+00:00",
+      "doc_key": "action_execution:db8880a9-2569-49e0-800e-f85601fba225:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:0e9ea7f5-c897-4863-9694-2f9c6d2372f3",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T02:19:49+00:00\n\n요약:\n2025-11-10T02:19:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.87까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T02:19:49+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T02:19:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.87까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T02:19:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.87까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:19:49+00:00",
+      "doc_key": "incident_report:0e9ea7f5-c897-4863-9694-2f9c6d2372f3"
+    }
+  },
+  {
+    "doc_key": "incident_report:568be69a-9248-40c7-bb71-e1dbc50abc95",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T02:21:07+00:00\n\n요약:\n2025-11-10T02:21:07+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.91까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T02:21:07+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T02:21:07+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.91까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T02:21:07+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.91까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:21:07+00:00",
+      "doc_key": "incident_report:568be69a-9248-40c7-bb71-e1dbc50abc95"
+    }
+  },
+  {
+    "doc_key": "incident_report:b0be62a2-4bcc-405a-8ed2-4bec131ebe7b",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T02:50:49+00:00\n\n요약:\n2025-11-10T02:50:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.84까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T02:50:49+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T02:50:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.84까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T02:50:49+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.84까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:50:49+00:00",
+      "doc_key": "incident_report:b0be62a2-4bcc-405a-8ed2-4bec131ebe7b"
+    }
+  },
+  {
+    "doc_key": "action_execution:48916d91-1e98-44ce-abbc-04ed254de532:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T02:51:02+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T02:51:02+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T02:51:02+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T02:51:02+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T02:51:02+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T02:51:02+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:51:02+00:00",
+      "doc_key": "action_execution:48916d91-1e98-44ce-abbc-04ed254de532:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:09c3df5d-482e-4c6b-be13-d7c3a865e2b5",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T02:52:06+00:00\n\n요약:\n2025-11-10T02:52:06+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.92까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T02:52:06+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T02:52:06+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.92까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T02:52:06+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.92까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:52:06+00:00",
+      "doc_key": "incident_report:09c3df5d-482e-4c6b-be13-d7c3a865e2b5"
+    }
+  },
+  {
+    "doc_key": "action_execution:8c352909-e55d-40cb-8edb-c1511d7c96e5:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-10T02:52:10+00:00\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "created_at": "2025-11-10T02:52:10+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T02:52:10+00:00",
+      "doc_key": "action_execution:8c352909-e55d-40cb-8edb-c1511d7c96e5:deferred"
+    }
+  },
+  {
+    "doc_key": "incident_report:89416cfa-bc58-40db-94f3-25b81f310ba5",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T03:14:37+00:00\n\n요약:\n2025-11-10T03:14:37+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.36까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T03:14:37+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T03:14:37+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.36까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T03:14:37+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.36까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T03:14:37+00:00",
+      "doc_key": "incident_report:89416cfa-bc58-40db-94f3-25b81f310ba5"
+    }
+  },
+  {
+    "doc_key": "action_execution:22d086a8-46f2-4c32-adf1-2eb17bb2a95d:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T03:14:50+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T03:14:50+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T03:14:50+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T03:14:50+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T03:14:50+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T03:14:50+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T03:14:50+00:00",
+      "doc_key": "action_execution:22d086a8-46f2-4c32-adf1-2eb17bb2a95d:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:ee4c6f99-9668-4f0c-98a1-8748e2907d9f",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T03:15:33+00:00\n\n요약:\n2025-11-10T03:15:33+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.93까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T03:15:33+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T03:15:33+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.93까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T03:15:33+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.93까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T03:15:33+00:00",
+      "doc_key": "incident_report:ee4c6f99-9668-4f0c-98a1-8748e2907d9f"
+    }
+  },
+  {
+    "doc_key": "action_execution:b04d12b6-24cc-474a-8522-055740e565bd:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-10T03:15:50+00:00\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "created_at": "2025-11-10T03:15:50+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T03:15:50+00:00",
+      "doc_key": "action_execution:b04d12b6-24cc-474a-8522-055740e565bd:deferred"
+    }
+  },
+  {
+    "doc_key": "incident_report:1dc6de66-cc19-49b0-b641-c1b448dff7aa",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T03:16:52+00:00\n\n요약:\n2025-11-10T03:16:52+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.83까지 상승했습니다.\n\n근본 원인:\nRecent deploy introduced regression in request validation\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T03:16:52+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025-11-10T03:16:52+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.83까지 상승했습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025-11-10T03:16:52+00:00 UTC에 'Nginx 5xx surge on checkout API' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.83까지 상승했습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T03:16:52+00:00",
+      "doc_key": "incident_report:1dc6de66-cc19-49b0-b641-c1b448dff7aa"
+    }
+  },
+  {
+    "doc_key": "action_execution:9f86c5c6-d9e3-4ca1-b297-03bfa247300e:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T03:17:33+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T03:17:33+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T03:17:33+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T03:17:33+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T03:17:33+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.",
+    "created_at": "2025-11-10T03:17:33+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T03:17:33+00:00",
+      "doc_key": "action_execution:9f86c5c6-d9e3-4ca1-b297-03bfa247300e:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:cadc29f0-b740-408d-af1d-6e2faa0ff685",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T03:26:48+00:00\n\n요약:\n2025-11-10T03:26:48+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.90까지 상승했습니다.\n\n근본 원인:\nAshburn edge node receiving concentrated traffic burst\n\n영향 범위:\n이번 장애로 인해 주요 요청 실패와 지연이 발생했을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n\n후속 조치:\n- 사후 분석 회의를 열고 근본 원인과 재발 방지 대책을 문서화하세요.",
+    "created_at": "2025-11-10T03:26:48+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025-11-10T03:26:48+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.90까지 상승했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025-11-10T03:26:48+00:00 UTC에 'Edge node CPU spike' 시나리오가 감지되었습니다. HTTP 오류율이 임계값 0.05을(를) 초과했고 CPU 사용률이 0.90까지 상승했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요."
+      ],
+      "created_at": "2025-11-10T03:26:48+00:00",
+      "doc_key": "incident_report:cadc29f0-b740-408d-af1d-6e2faa0ff685"
+    }
+  },
+  {
+    "doc_key": "incident_report:e13c962e-f0bf-4d88-a438-4111d5a9ff7f",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T03:58:06+00:00\n\n요약:\n2025년 11월 10일 03:58 UTC에 Edge 노드에서 CPU 사용률이 93.54%로 임계치를 초과하였고, HTTP 오류율도 0.1417로 증가하였습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 Prometheus 스크랩 작업으로 인한 것으로 추정됩니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드가 집중적인 트래픽을 수신했거나, 새로운 Prometheus 스크랩 작업이 잘못된 간격으로 실행되고 있거나, 백그라운드 배치 작업이 공유 코어에 고정되어 있는 것으로 보입니다. 특히, cpu_usage가 10분 이상 92%를 초과한 점이 이를 뒷받침합니다.\n\n영향 범위:\n고객에게는 서비스 지연 및 오류가 발생할 수 있으며, 특히 HTTP 오류율이 증가함에 따라 사용자 경험이 저하될 수 있습니다. 또한, 서비스의 안정성에 대한 신뢰도가 떨어질 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)\n- Jira 아울타이지 티켓을 열어 가시성을 확보합니다. (사유: 문제의 추적 및 해결을 위한 가시성을 높이기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 상태를 모니터링하여 추가적인 부하를 확인합니다.",
+    "created_at": "2025-11-10T03:58:06+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 10일 03:58 UTC에 Edge 노드에서 CPU 사용률이 93.54%로 임계치를 초과하였고, HTTP 오류율도 0.1417로 증가하였습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 Prometheus 스크랩 작업으로 인한 것으로 추정됩니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 10일 03:58 UTC에 Edge 노드에서 CPU 사용률이 93.54%로 임계치를 초과하였고, HTTP 오류율도 0.1417로 증가하였습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 Prometheus 스크랩 작업으로 인한 것으로 추정됩니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)",
+        "Jira 아울타이지 티켓을 열어 가시성을 확보합니다. (사유: 문제의 추적 및 해결을 위한 가시성을 높이기 위함)"
+      ],
+      "created_at": "2025-11-10T03:58:06+00:00",
+      "doc_key": "incident_report:e13c962e-f0bf-4d88-a438-4111d5a9ff7f"
+    }
+  },
+  {
+    "doc_key": "action_execution:59c314fd-807e-47d5-b12d-f7868592874b:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T03:58:52+00:00\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-10T03:58:52+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-10T03:58:52+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-10T03:58:52+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T03:58:52+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-10T03:58:52+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함) -> status=success, 실행시각=2025-11-10T03:58:52+00:00, 비고=Simulated run completed for '실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)'.\n- Jira 아울타이지 티켓을 열어 가시성을 확보합니다. (사유: 문제의 추적 및 해결을 위한 가시성을 높이기 위함) -> status=success, 실행시각=2025-11-10T03:58:52+00:00, 비고=Simulated run completed for 'Jira 아울타이지 티켓을 열어 가시성을 확보합니다. (사유: 문제의 추적 및 해결을 위한 가시성을 높이기 위함)'.",
+    "created_at": "2025-11-10T03:58:52+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)",
+        "Jira 아울타이지 티켓을 열어 가시성을 확보합니다. (사유: 문제의 추적 및 해결을 위한 가시성을 높이기 위함)"
+      ],
+      "created_at": "2025-11-10T03:58:52+00:00",
+      "doc_key": "action_execution:59c314fd-807e-47d5-b12d-f7868592874b:executed"
+    }
+  },
+  {
+    "doc_key": "incident_report:a64b44ab-72fb-4607-89ab-39b8f315d31d",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-10T03:59:18+00:00\n\n요약:\n2025년 11월 10일 03:59:18 UTC에 Edge node의 CPU 사용량이 80% 임계치를 초과하여 90.61%에 도달했습니다. 이로 인해 HTTP 오류율도 0.0849로 증가하였으며, 이는 설정된 임계치인 0.0500을 초과한 상황입니다.\n\n근본 원인:\n가능한 근본 원인으로는 Ashburn 엣지 노드에 집중된 트래픽 급증, 잘못 구성된 간격으로 인해 과도하게 작동하는 새로운 Prometheus 스크랩 작업, 또는 공유 코어에 고정된 백그라운드 배치 작업이 있을 수 있습니다. 특히, cpu_usage가 10분 이상 92% 이상 지속된 점이 문제를 악화시킨 것으로 추정됩니다.\n\n영향 범위:\n고객에게는 서비스 응답 지연 및 오류가 발생하여 사용자 경험이 저하되었습니다. 특히, HTTP 오류율이 증가함에 따라 일부 고객이 서비스 이용에 어려움을 겪었을 가능성이 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 감소시킬 수 있습니다.)\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 부하를 줄이기 위함입니다.)\n- Jira 아울티지 티켓을 열어 가시성을 확보합니다. (사유: 문제를 추적하고 해결하기 위한 공식적인 기록을 남기기 위함입니다.)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 상태를 모니터링하여 추가적인 CPU 사용량 증가를 방지합니다.",
+    "created_at": "2025-11-10T03:59:18+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 10일 03:59:18 UTC에 Edge node의 CPU 사용량이 80% 임계치를 초과하여 90.61%에 도달했습니다. 이로 인해 HTTP 오류율도 0.0849로 증가하였으며, 이는 설정된 임계치인 0.0500을 초과한 상황입니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 10일 03:59:18 UTC에 Edge node의 CPU 사용량이 80% 임계치를 초과하여 90.61%에 도달했습니다. 이로 인해 HTTP 오류율도 0.0849로 증가하였으며, 이는 설정된 임계치인 0.0500을 초과한 상황입니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 감소시킬 수 있습니다.)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 부하를 줄이기 위함입니다.)",
+        "Jira 아울티지 티켓을 열어 가시성을 확보합니다. (사유: 문제를 추적하고 해결하기 위한 공식적인 기록을 남기기 위함입니다.)"
+      ],
+      "created_at": "2025-11-10T03:59:18+00:00",
+      "doc_key": "incident_report:a64b44ab-72fb-4607-89ab-39b8f315d31d"
+    }
+  },
+  {
+    "doc_key": "action_execution:e23f03fe-1e98-4c7f-8a28-5cb90edea9cb:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-10T03:59:42+00:00\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 감소시킬 수 있습니다.)\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 부하를 줄이기 위함입니다.)\n- Jira 아울티지 티켓을 열어 가시성을 확보합니다. (사유: 문제를 추적하고 해결하기 위한 공식적인 기록을 남기기 위함입니다.)",
+    "created_at": "2025-11-10T03:59:42+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 감소시킬 수 있습니다.)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 부하를 줄이기 위함입니다.)",
+        "Jira 아울티지 티켓을 열어 가시성을 확보합니다. (사유: 문제를 추적하고 해결하기 위한 공식적인 기록을 남기기 위함입니다.)"
+      ],
+      "created_at": "2025-11-10T03:59:42+00:00",
+      "doc_key": "action_execution:e23f03fe-1e98-4c7f-8a28-5cb90edea9cb:deferred"
+    }
+  }
+]
