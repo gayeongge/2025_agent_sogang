@@ -1,4 +1,4 @@
-"""Background Prometheus monitor that auto-dispatches incident reports."""
+﻿"""Background Prometheus monitor that auto-dispatches incident reports."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from typing import List, Tuple
 from src.backend.actions import ActionExecutionService
 from src.backend.analysis import generate_incident_analysis
 from src.backend.rag import rag_service
-from src.backend.services import AlertService, JiraService, PrometheusService, SlackService
+from src.backend.services import AlertService, PrometheusService, SlackService
 from src.backend.state import STATE, STATE_LOCK, IncidentReport, MetricSample, make_sample
 from src.incident_console.errors import IntegrationError
 from src.incident_console.models import AlertScenario
@@ -28,13 +28,11 @@ class PrometheusMonitor:
         prom_service: PrometheusService,
         alert_service: AlertService,
         slack_service: SlackService,
-        jira_service: JiraService,
         action_service: ActionExecutionService,
     ) -> None:
         self._prom_service = prom_service
         self._alert_service = alert_service
         self._slack_service = slack_service
-        self._jira_service = jira_service
         self._action_service = action_service
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -129,7 +127,6 @@ class PrometheusMonitor:
         with STATE_LOCK:
             preferences = STATE.preferences
             slack_settings = STATE.slack
-            jira_settings = STATE.jira
 
         if preferences.slack:
             if slack_settings.token:
@@ -137,21 +134,12 @@ class PrometheusMonitor:
                     self._slack_service.dispatch(scenario, report_body=report_body)
                     recipients_sent.append("slack")
                 except (IntegrationError, ValueError) as exc:
-                    recipients_missing.append(f"Slack 전송 실패: {exc}")
+                    recipients_missing.append(f"Slack delivery failed: {exc}")
             else:
-                recipients_missing.append("Slack 설정이 필요합니다")
-
-        if preferences.jira:
-            if all([jira_settings.site, jira_settings.project, jira_settings.email, jira_settings.token]):
-                try:
-                    self._jira_service.create_issue(scenario, report_body=report_body)
-                    recipients_sent.append("jira")
-                except (IntegrationError, ValueError) as exc:
-                    recipients_missing.append(f"Jira 전송 실패: {exc}")
-            else:
-                recipients_missing.append("Jira 설정이 필요합니다")
+                recipients_missing.append("Slack settings are required")
 
         return recipients_sent, recipients_missing
+
 
     def _select_scenario(self, sample: MetricSample) -> AlertScenario | None:
         primary_code = "http_5xx_surge"
@@ -197,3 +185,4 @@ class PrometheusMonitor:
     def _record_monitor_failure(self, message: str) -> None:
         with STATE_LOCK:
             STATE.append_feed(f"[{timestamp()}] {message}")
+

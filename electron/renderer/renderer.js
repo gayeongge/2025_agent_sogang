@@ -17,19 +17,11 @@
     alertList: $('#alertList'),
     systemFeed: $('#systemFeed'),
     notifySlack: $('#notifySlack'),
-    notifyJira: $('#notifyJira'),
     slackToken: $('#slackToken'),
     slackWorkspace: $('#slackWorkspace'),
     slackChannel: $('#slackChannel'),
     slackTest: $('#slackTest'),
     slackSave: $('#slackSave'),
-    jiraSite: $('#jiraSite'),
-    jiraProject: $('#jiraProject'),
-    jiraEmail: $('#jiraEmail'),
-    jiraToken: $('#jiraToken'),
-    jiraTest: $('#jiraTest'),
-    jiraSave: $('#jiraSave'),
-    jiraCreate: $('#jiraCreate'),
     promUrl: $('#promUrl'),
     promHttpQuery: $('#promHttpQuery'),
     promHttpThreshold: $('#promHttpThreshold'),
@@ -68,7 +60,7 @@
   let pendingRefresh = false;
   let applyingPreferences = false;
   let preferenceTimer = null;
-  let lastSavedPreferences = { slack: true, jira: true };
+  let lastSavedPreferences = { slack: true };
   let activeReport = null;
   let toastTimer = null;
   const STATUS_LABELS = {
@@ -233,7 +225,6 @@
     }
     renderPreferences(state.preferences);
     renderSlack(state.slack);
-    renderJira(state.jira);
     renderPrometheus(state.prometheus);
     renderMetrics(state.monitor, state.prometheus);
     renderSamples(state.monitor);
@@ -254,14 +245,9 @@
       elements.notifySlack.checked = Boolean(preferences.slack);
       delete elements.notifySlack.dataset.dirty;
     }
-    if (elements.notifyJira) {
-      elements.notifyJira.checked = Boolean(preferences.jira);
-      delete elements.notifyJira.dataset.dirty;
-    }
     applyingPreferences = false;
     lastSavedPreferences = {
       slack: Boolean(preferences.slack),
-      jira: Boolean(preferences.jira),
     };
   };
 
@@ -293,13 +279,6 @@
     if (elements.slackChannel) {
       updateInputValue(elements.slackChannel, settings.channel || '#ops-incident');
     }
-  };
-
-  const renderJira = (settings = {}) => {
-    updateInputValue(elements.jiraSite, settings.site || '');
-    updateInputValue(elements.jiraProject, settings.project || '');
-    updateInputValue(elements.jiraEmail, settings.email || '');
-    updateInputValue(elements.jiraToken, settings.token || '');
   };
 
   const renderPrometheus = (settings = {}) => {
@@ -936,13 +915,6 @@
     channel: elements.slackChannel ? elements.slackChannel.value.trim() || '#ops-incident' : '#ops-incident',
   });
 
-  const getJiraPayload = () => ({
-    site: elements.jiraSite ? elements.jiraSite.value.trim() : '',
-    project: elements.jiraProject ? elements.jiraProject.value.trim() : '',
-    email: elements.jiraEmail ? elements.jiraEmail.value.trim() : '',
-    token: elements.jiraToken ? elements.jiraToken.value.trim() : '',
-  });
-
   const getPrometheusPayload = () => ({
     url: elements.promUrl ? elements.promUrl.value.trim() : '',
     http_query: elements.promHttpQuery ? elements.promHttpQuery.value.trim() : '',
@@ -968,33 +940,26 @@
   const updatePreferences = async () => {
     const payload = {
       slack: Boolean(elements.notifySlack && elements.notifySlack.checked),
-      jira: Boolean(elements.notifyJira && elements.notifyJira.checked),
     };
-    if (
-      payload.slack === lastSavedPreferences.slack &&
-      payload.jira === lastSavedPreferences.jira
-    ) {
+    if (payload.slack === lastSavedPreferences.slack) {
       return;
     }
     try {
       await request('/notifications/preferences', { method: 'POST', body: payload });
       lastSavedPreferences = { ...payload };
-      markPristine(elements.notifySlack, elements.notifyJira);
-      showToast('알림 대상을 업데이트했습니다.');
+      markPristine(elements.notifySlack);
+      showToast('알림 설정을 업데이트했습니다.');
     } catch (error) {
-      showToast(error.message || '알림 대상 업데이트에 실패했습니다.', 'error');
+      showToast(error.message || '알림 설정 업데이트에 실패했습니다.', 'error');
       applyingPreferences = true;
       if (elements.notifySlack) {
         elements.notifySlack.checked = lastSavedPreferences.slack;
         delete elements.notifySlack.dataset.dirty;
       }
-      if (elements.notifyJira) {
-        elements.notifyJira.checked = lastSavedPreferences.jira;
-        delete elements.notifyJira.dataset.dirty;
-      }
       applyingPreferences = false;
     }
   };
+
 
   const handleVerify = async () => {
     setBusy(elements.verifyButton, true);
@@ -1051,62 +1016,6 @@
     }
   };
 
-  const handleJiraTest = async () => {
-    const payload = getJiraPayload();
-    if (!payload.site || !payload.project || !payload.email || !payload.token) {
-      showToast('Jira 사이트 URL과 프로젝트, 이메일, 토큰을 입력해주세요.', 'error');
-      return;
-    }
-    setBusy(elements.jiraTest, true);
-    try {
-      const result = await request('/jira/test', { method: 'POST', body: payload });
-      const name = result && (result.name || result.key || payload.project);
-      showToast(name ? `Jira 연결 확인 완료 (${name})` : 'Jira 연결 확인 완료');
-    } catch (error) {
-      showToast(error.message || 'Jira 테스트에 실패했습니다.', 'error');
-    } finally {
-      setBusy(elements.jiraTest, false);
-    }
-  };
-
-  const handleJiraSave = async () => {
-    const payload = getJiraPayload();
-    if (!payload.site || !payload.project || !payload.email || !payload.token) {
-      showToast('Jira 설정을 모두 입력해주세요.', 'error');
-      return;
-    }
-    setBusy(elements.jiraSave, true);
-    try {
-      const result = await request('/jira/save', { method: 'POST', body: payload });
-      const message = result && result.message ? result.message : 'Jira 설정을 저장했습니다.';
-      showToast(message);
-      markPristine(
-        elements.jiraSite,
-        elements.jiraProject,
-        elements.jiraEmail,
-        elements.jiraToken
-      );
-      await refreshState({ silent: true });
-    } catch (error) {
-      showToast(error.message || 'Jira 설정 저장에 실패했습니다.', 'error');
-    } finally {
-      setBusy(elements.jiraSave, false);
-    }
-  };
-
-  const handleJiraCreate = async () => {
-    setBusy(elements.jiraCreate, true);
-    try {
-      const result = await request('/jira/create', { method: 'POST' });
-      const key = result && result.key ? result.key : 'Jira 이슈';
-      showToast(`Jira 이슈를 생성했습니다: ${key}`);
-      await refreshState({ silent: true });
-    } catch (error) {
-      showToast(error.message || 'Jira 이슈 생성에 실패했습니다.', 'error');
-    } finally {
-      setBusy(elements.jiraCreate, false);
-    }
-  };
 
   const handlePromTest = async () => {
     const payload = getPrometheusTestPayload();
@@ -1226,7 +1135,7 @@
       updateSampleToggleLabel();
     }
 
-    [elements.notifySlack, elements.notifyJira].forEach((input) => {
+    [elements.notifySlack].forEach((input) => {
       if (input) {
         input.addEventListener('change', handlePreferenceChange);
       }
@@ -1247,10 +1156,6 @@
       elements.slackToken,
       elements.slackWorkspace,
       elements.slackChannel,
-      elements.jiraSite,
-      elements.jiraProject,
-      elements.jiraEmail,
-      elements.jiraToken,
       elements.promUrl,
       elements.promHttpQuery,
       elements.promHttpThreshold,
@@ -1263,15 +1168,6 @@
     }
     if (elements.slackSave) {
       elements.slackSave.addEventListener('click', handleSlackSave);
-    }
-    if (elements.jiraTest) {
-      elements.jiraTest.addEventListener('click', handleJiraTest);
-    }
-    if (elements.jiraSave) {
-      elements.jiraSave.addEventListener('click', handleJiraSave);
-    }
-    if (elements.jiraCreate) {
-      elements.jiraCreate.addEventListener('click', handleJiraCreate);
     }
     if (elements.promTest) {
       elements.promTest.addEventListener('click', handlePromTest);

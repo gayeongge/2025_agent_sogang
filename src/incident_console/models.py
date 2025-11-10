@@ -23,14 +23,6 @@ class SlackSettings:
 
 
 @dataclass
-class JiraSettings:
-    site: str = ""
-    project: str = ""
-    email: str = ""
-    token: str = ""
-
-
-@dataclass
 class PrometheusSettings:
     url: str = ""
     http_query: str = ""

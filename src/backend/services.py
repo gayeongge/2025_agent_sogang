@@ -15,12 +15,10 @@ from src.backend.state import (
     MetricSample,
     make_sample,
 )
-from src.incident_console.integrations.jira import JiraIntegration
 from src.incident_console.integrations.prometheus import PrometheusClient
 from src.incident_console.integrations.slack import SlackIntegration
 from src.incident_console.models import (
     AlertScenario,
-    JiraSettings,
     PrometheusSettings,
     SlackSettings,
 )
@@ -79,64 +77,6 @@ class SlackService:
         lines.extend(f"{idx + 1}. {item}" for idx, item in enumerate(scenario.hypotheses))
         lines.append("Recommended next step:")
         lines.append(scenario.actions[0])
-        return "\n".join(lines)
-
-
-class JiraService:
-    def __init__(self, integration: Optional[JiraIntegration] = None) -> None:
-        self._integration = integration or JiraIntegration()
-
-    def test(self, settings: JiraSettings) -> Dict[str, object]:
-        return self._integration.test_connection(
-            settings.site,
-            settings.email,
-            settings.token,
-            settings.project,
-        )
-
-    def save(self, settings: JiraSettings) -> str:
-        with STATE_LOCK:
-            STATE.jira = settings
-            message = f"Jira settings saved for project {settings.project or '(unset)'}"
-            STATE.append_feed(_feed_line(message))
-        return message
-
-    def create_issue(
-        self,
-        scenario: AlertScenario,
-        report_body: Optional[str] = None,
-    ) -> Dict[str, object]:
-        with STATE_LOCK:
-            settings = STATE.jira
-
-        if not all([settings.site, settings.project, settings.email, settings.token]):
-            raise ValueError("Jira settings are incomplete")
-
-        summary = f"[Auto] {scenario.title}"
-        description = report_body or self._build_description(scenario)
-        result = self._integration.create_incident_issue(
-            settings.site,
-            settings.email,
-            settings.token,
-            settings.project,
-            summary,
-            description,
-        )
-        with STATE_LOCK:
-            key = result.get("key", "<unknown>")
-            STATE.append_feed(_feed_line(f"Jira issue {key} created for {settings.project}"))
-        return result
-
-    @staticmethod
-    def _build_description(scenario: AlertScenario) -> str:
-        lines = [scenario.description, "", "Hypotheses:"]
-        lines.extend(f"- {item}" for item in scenario.hypotheses)
-        lines.append("")
-        lines.append("Evidence:")
-        lines.extend(f"- {item}" for item in scenario.evidences)
-        lines.append("")
-        lines.append("Recommended actions:")
-        lines.extend(f"- {item}" for item in scenario.actions)
         return "\n".join(lines)
 
 
@@ -252,7 +192,6 @@ class AlertService:
         with STATE_LOCK:
             state_copy = {
                 "slack": asdict(STATE.slack),
-                "jira": asdict(STATE.jira),
                 "prometheus": asdict(STATE.prometheus),
                 "feed": list(STATE.feed),
                 "alert_history": list(STATE.alert_history),

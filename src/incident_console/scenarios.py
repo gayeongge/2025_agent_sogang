@@ -33,7 +33,7 @@ def load_default_scenarios() -> List[AlertScenario]:
             code="cpu_spike_core",
             title="Edge node CPU spike",
             source="Prometheus cpu_usage",
-            description="cpu_usage exceeded 90% triggering Jira incident",
+            description="cpu_usage exceeded 90% triggering incident response",
             hypotheses=[
                 "Ashburn edge node receiving concentrated traffic burst",
                 "New Prometheus scrape job running hot due to misconfigured interval",
@@ -47,7 +47,7 @@ def load_default_scenarios() -> List[AlertScenario]:
             actions=[
                 "Rebalance traffic by updating load balancer weights",
                 "Throttle scrape interval for experimental dashboard",
-                "Open Jira outage ticket for visibility",
+                "Notify incident channel for wider visibility",
             ],
         ),
     ]

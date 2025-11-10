@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+import sys
 from threading import Lock
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional
 
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("incident.rag")
 if not logger.handlers:
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter("[incident.rag] %(message)s"))
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)

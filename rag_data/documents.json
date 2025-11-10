@@ -1002,5 +1002,61 @@
       "created_at": "2025-11-10T03:59:42+00:00",
       "doc_key": "action_execution:e23f03fe-1e98-4c7f-8a28-5cb90edea9cb:deferred"
     }
+  },
+  {
+    "doc_key": "incident_report:524bce94-bcbc-4c8b-9ca0-a6ab7048dec7",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-10T05:34:23+00:00\n\n요약:\n2025년 11월 10일 05:34:23 UTC에 체크아웃 API에서 Nginx 5xx 오류가 급증하여 HTTP 오류율이 12%를 초과했습니다. 이는 최근 배포된 빌드와 관련이 있을 것으로 추정됩니다.\n\n근본 원인:\n주요 원인으로는 최근 배포된 빌드(#20250925.3)가 요청 검증에서 회귀를 도입했거나, 상위 결제 제공자의 타임아웃이 게이트웨이에 연쇄적으로 영향을 미쳤을 가능성이 있습니다. 또한, 자동 스케일링 그룹에서 따뜻한 인스턴스가 부족하여 콜드 스타트 실패가 발생했을 수도 있습니다.\n\n영향 범위:\n고객들은 체크아웃 API를 통해 결제를 진행하는 데 어려움을 겪고 있으며, 이는 서비스의 신뢰성에 부정적인 영향을 미치고 있습니다. 이로 인해 고객 이탈 및 매출 손실이 발생할 수 있습니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.\n- 게이트웨이 풀 확장: 트래픽 급증을 흡수하기 위해 게이트웨이 풀을 2배로 확장합니다.\n- 제품 관리자에게 알림: #ops-incident 채널을 통해 상황을 공유하여 추가적인 조치를 논의합니다.\n\n후속 조치:\n- 최근 배포와 메트릭 변화를 교차 확인하여 문제의 근본 원인을 파악합니다.\n- 상위 결제 제공자의 상태를 모니터링하여 타임아웃 문제를 해결합니다.",
+    "created_at": "2025-11-10T05:34:23+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025년 11월 10일 05:34:23 UTC에 체크아웃 API에서 Nginx 5xx 오류가 급증하여 HTTP 오류율이 12%를 초과했습니다. 이는 최근 배포된 빌드와 관련이 있을 것으로 추정됩니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025년 11월 10일 05:34:23 UTC에 체크아웃 API에서 Nginx 5xx 오류가 급증하여 HTTP 오류율이 12%를 초과했습니다. 이는 최근 배포된 빌드와 관련이 있을 것으로 추정됩니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.",
+        "게이트웨이 풀 확장: 트래픽 급증을 흡수하기 위해 게이트웨이 풀을 2배로 확장합니다.",
+        "제품 관리자에게 알림: #ops-incident 채널을 통해 상황을 공유하여 추가적인 조치를 논의합니다."
+      ],
+      "created_at": "2025-11-10T05:34:23+00:00",
+      "doc_key": "incident_report:524bce94-bcbc-4c8b-9ca0-a6ab7048dec7"
+    }
+  },
+  {
+    "doc_key": "action_execution:321533c2-6b92-4f02-913b-ac63dbb2a73f:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-10T05:34:42+00:00\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-10T05:34:42+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-10T05:34:42+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-10T05:34:42+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-10T05:34:42+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다. -> status=success, 실행시각=2025-11-10T05:34:42+00:00, 비고=Simulated run completed for '체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.'.\n- 게이트웨이 풀 확장: 트래픽 급증을 흡수하기 위해 게이트웨이 풀을 2배로 확장합니다. -> status=success, 실행시각=2025-11-10T05:34:42+00:00, 비고=Simulated run completed for '게이트웨이 풀 확장: 트래픽 급증을 흡수하기 위해 게이트웨이 풀을 2배로 확장합니다.'.\n- 제품 관리자에게 알림: #ops-incident 채널을 통해 상황을 공유하여 추가적인 조치를 논의합니다. -> status=success, 실행시각=2025-11-10T05:34:42+00:00, 비고=Simulated run completed for '제품 관리자에게 알림: #ops-incident 채널을 통해 상황을 공유하여 추가적인 조치를 논의합니다.'.",
+    "created_at": "2025-11-10T05:34:42+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.",
+        "게이트웨이 풀 확장: 트래픽 급증을 흡수하기 위해 게이트웨이 풀을 2배로 확장합니다.",
+        "제품 관리자에게 알림: #ops-incident 채널을 통해 상황을 공유하여 추가적인 조치를 논의합니다."
+      ],
+      "created_at": "2025-11-10T05:34:42+00:00",
+      "doc_key": "action_execution:321533c2-6b92-4f02-913b-ac63dbb2a73f:executed"
+    }
   }
 ]

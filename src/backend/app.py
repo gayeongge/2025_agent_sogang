@@ -12,17 +12,15 @@ from src.backend.monitor import PrometheusMonitor
 from src.backend.rag import rag_service
 from src.backend.services import (
     AlertService,
-    JiraService,
     PrometheusService,
     SlackService,
     serialize_action_execution,
 )
 from src.backend.state import STATE, STATE_LOCK
 from src.incident_console.errors import IntegrationError
-from src.incident_console.models import JiraSettings, PrometheusSettings, SlackSettings
+from src.incident_console.models import PrometheusSettings, SlackSettings
 
 slack_service = SlackService()
-jira_service = JiraService()
 prom_service = PrometheusService()
 alert_service = AlertService()
 action_service = ActionExecutionService()
@@ -30,7 +28,6 @@ monitor = PrometheusMonitor(
     prom_service,
     alert_service,
     slack_service,
-    jira_service,
     action_service,
 )
 rag_service.bootstrap_scenarios(STATE.scenarios)
@@ -44,13 +41,6 @@ class SlackSettingsPayload(BaseModel):
 
 class SlackDispatchPayload(BaseModel):
     channel: str | None = Field(None, description="Override Slack channel")
-
-
-class JiraSettingsPayload(BaseModel):
-    site: str = Field(..., description="Base URL to the Jira cloud instance")
-    project: str = Field(..., description="Project key")
-    email: str = Field(..., description="Account email")
-    token: str = Field(..., description="API token")
 
 
 class PrometheusSettingsPayload(BaseModel):
@@ -69,7 +59,6 @@ class PrometheusTestPayload(BaseModel):
 
 class NotificationPreferencePayload(BaseModel):
     slack: bool = True
-    jira: bool = True
 
 
 app = FastAPI(title="Incident Response Console Backend", version="0.2.0")
@@ -152,35 +141,6 @@ def slack_dispatch(payload: SlackDispatchPayload) -> dict[str, object]:
     return _handle_errors(lambda: slack_service.dispatch(scenario, payload.channel))
 
 
-@app.post("/jira/test")
-def jira_test(payload: JiraSettingsPayload) -> dict[str, object]:
-    settings = JiraSettings(
-        site=payload.site.strip(),
-        project=payload.project.strip(),
-        email=payload.email.strip(),
-        token=payload.token.strip(),
-    )
-    return _handle_errors(lambda: jira_service.test(settings))
-
-
-@app.post("/jira/save")
-def jira_save(payload: JiraSettingsPayload) -> dict[str, str]:
-    settings = JiraSettings(
-        site=payload.site.strip(),
-        project=payload.project.strip(),
-        email=payload.email.strip(),
-        token=payload.token.strip(),
-    )
-    message = jira_service.save(settings)
-    return {"message": message}
-
-
-@app.post("/jira/create")
-def jira_create() -> dict[str, object]:
-    scenario = alert_service.require_last_alert()
-    return _handle_errors(lambda: jira_service.create_issue(scenario))
-
-
 @app.post("/prometheus/test")
 def prometheus_test(payload: PrometheusTestPayload) -> dict[str, float]:
     settings = PrometheusSettings(
@@ -212,10 +172,8 @@ def update_notification_preferences(
 ) -> dict[str, bool]:
     with STATE_LOCK:
         STATE.preferences.slack = payload.slack
-        STATE.preferences.jira = payload.jira
         current = {
             "slack": STATE.preferences.slack,
-            "jira": STATE.preferences.jira,
         }
     return current
 

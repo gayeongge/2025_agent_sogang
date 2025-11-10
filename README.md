@@ -1,6 +1,6 @@
 ﻿# Incident Response Console
 
-Electron desktop UI backed by a Python FastAPI service that simulates the first-responder workflow for Prometheus alerts. The app keeps the MVP features from `order.md` (F1-F4): firing a runbook scenario, inspecting hypotheses/evidence, dispatching Slack notifications, opening Jira issues, and verifying recovery with Prometheus queries.
+Electron desktop UI backed by a Python FastAPI service that simulates the first-responder workflow for Prometheus alerts. The app keeps the MVP features from `order.md` (F1-F4): firing a runbook scenario, inspecting hypotheses/evidence, dispatching Slack notifications, and verifying recovery with Prometheus queries.
 
 ## Architecture
 
@@ -8,13 +8,13 @@ Electron desktop UI backed by a Python FastAPI service that simulates the first-
 src/
   main.py                         # python -m src.main -> launches FastAPI backend
   backend/
-    app.py                        # FastAPI routes (alerts, Slack, Jira, Prometheus)
+    app.py                        # FastAPI routes (alerts, Slack, Prometheus)
     services.py                   # Business logic & shared state helpers
     state.py                      # In-memory state used by the API
     main.py                       # uvicorn runner (reads INCIDENT_BACKEND_* env vars)
   incident_console/
     models.py | scenarios.py      # Core domain models & sample incident scenarios
-    integrations/                 # Slack/Jira/Prometheus HTTP clients (requests based)
+    integrations/                 # Slack/Prometheus HTTP clients (requests based)
     errors.py                     # Shared IntegrationError type
     utils.py                      # Shared helpers (time format, threshold parsing)
 electron/
@@ -36,7 +36,7 @@ scripts/
 
 - Python 3.10+
 - Node.js 18+ (Electron runtime)
-- Slack/Jira/Prometheus credentials if you want to hit real APIs
+- Slack/Prometheus credentials if you want to hit real APIs
 - (Optional) OpenAI API key (OPENAI_API_KEY) to enable AI 기반 사고 분석 보고서를 생성합니다
 
 ## Backend setup
@@ -83,9 +83,6 @@ INCIDENT_BACKEND_HOST=127.0.0.1 INCIDENT_BACKEND_PORT=8000 npm start
 | POST   | `/slack/test`       | `auth.test` connectivity check       |
 | POST   | `/slack/save`       | Persist Slack defaults in memory     |
 | POST   | `/slack/dispatch`   | Send the most recent scenario to Slack |
-| POST   | `/jira/test`        | Fetch project metadata using REST API |
-| POST   | `/jira/save`        | Persist Jira settings                |
-| POST   | `/jira/create`      | Create a Task issue for last alert   |
 | POST   | `/prometheus/test`  | Run HTTP + CPU queries once          |
 | POST   | `/prometheus/save`  | Persist Prometheus settings          |
 | GET    | `/state`            | Dump current in-memory settings, feed, and last alert |
@@ -96,13 +93,14 @@ All responses are JSON; errors use FastAPI Problem Details with `detail` explain
 ## Current behaviour
 
 - Alert triggers still choose from `scenarios.py` and prefill hypotheses/evidence/actions.
-- Slack/Jira/Prometheus operations reuse the original `requests` clients, so you can point them at live services.
+- Slack/Prometheus operations reuse the original `requests` clients, so you can point them at live services.
 - The feed persists in memory while the backend is running; restart clears state.
 - The Electron renderer is now the sole UI surface, featuring a bright monotone-inspired layout tuned for quick operator scans.
 - A background Prometheus monitor samples metrics every few seconds, detects anomalies when at least one of the latest five samples breaches a threshold, and auto-generates incident reports.
-- Notification targets (Slack/Jira) can be toggled via checkboxes; 설정이 비어 있으면 전체 보고서를 팝업으로 보여 주어 사용자가 수동으로 조치할 수 있습니다.
+- Notification targets (Slack) can be toggled via checkboxes so operators immediately know which channel will receive the automated report.
 
-- OpenAI API가 설정돼 있으면 Prometheus 임계값을 초과한 시점에 AI가 원인·영향·조치 계획을 분석해 보고서 형태로 Slack/Jira 및 UI 모달에 제공합니다 (없으면 기본 규칙 기반 보고서를 사용합니다).
+- When an OpenAI API key is configured, the Prometheus breach path invokes the AI-written Korean analysis/action plan before dispatching to Slack (otherwise a deterministic fallback is used).
+
 
 ## Next steps
 

@@ -9,7 +9,6 @@ from typing import Deque, List, Optional
 
 from src.incident_console.models import (
     AlertScenario,
-    JiraSettings,
     PrometheusSettings,
     SlackSettings,
 )
@@ -43,7 +42,6 @@ class MetricSample:
 @dataclass
 class NotificationPreferences:
     slack: bool = True
-    jira: bool = True
 
 
 @dataclass
@@ -95,7 +93,6 @@ class AppState:
     """Mutable state shared across API requests."""
 
     slack: SlackSettings = field(default_factory=SlackSettings)
-    jira: JiraSettings = field(default_factory=JiraSettings)
     prometheus: PrometheusSettings = field(default_factory=PrometheusSettings)
     scenarios: List[AlertScenario] = field(default_factory=load_default_scenarios)
     feed: List[str] = field(default_factory=list)
