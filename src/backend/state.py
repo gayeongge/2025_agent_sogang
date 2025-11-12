@@ -89,6 +89,18 @@ class ActionExecution:
 
 
 @dataclass
+class RecoveryCheck:
+    """Tracks whether a given action execution led to metric recovery."""
+
+    execution_id: str
+    scenario_code: str
+    scenario_title: str
+    started_at: str
+    status: str = "pending"
+    resolved_at: Optional[str] = None
+
+
+@dataclass
 class AppState:
     """Mutable state shared across API requests."""
 
@@ -108,6 +120,7 @@ class AppState:
     last_report: Optional[IncidentReport] = None
     pending_reports: List[IncidentReport] = field(default_factory=list)
     action_executions: List[ActionExecution] = field(default_factory=list)
+    recovery_checks: List[RecoveryCheck] = field(default_factory=list)
 
     def append_feed(self, message: str) -> None:
         self.feed.append(message)

@@ -80,6 +80,20 @@
     report: 'rag-pill--report',
     reference: 'rag-pill--reference',
   };
+  const RECOVERY_STATUS_LABELS = {
+    recovered: 'Recovered',
+    pending: 'Pending',
+    not_executed: 'Not Executed',
+    not_applicable: 'N/A',
+    unknown: 'Unknown',
+  };
+  const RECOVERY_STATUS_CLASS = {
+    recovered: 'rag-pill--recovered',
+    pending: 'rag-pill--pending',
+    not_executed: 'rag-pill--not_executed',
+    not_applicable: 'rag-pill--not_applicable',
+    unknown: 'rag-pill--unknown',
+  };
   let activeActionExecution = null;
   let activeTab = 'slack';
   let ragLoaded = false;
@@ -643,6 +657,19 @@
       badge.textContent = statusLabel;
       statusCell.appendChild(badge);
       row.appendChild(statusCell);
+
+      const recoveryValue =
+        metadata.recovery_status || doc.recovery_status || 'unknown';
+      const recoveryKey = String(recoveryValue).toLowerCase();
+      const recoveryLabel = RECOVERY_STATUS_LABELS[recoveryKey] || recoveryKey;
+      const recoveryClass =
+        RECOVERY_STATUS_CLASS[recoveryKey] || RECOVERY_STATUS_CLASS.unknown;
+      const recoveryCell = document.createElement('td');
+      const recoveryBadge = document.createElement('span');
+      recoveryBadge.className = `rag-pill ${recoveryClass}`;
+      recoveryBadge.textContent = recoveryLabel;
+      recoveryCell.appendChild(recoveryBadge);
+      row.appendChild(recoveryCell);
 
       const createdCell = document.createElement('td');
       createdCell.textContent = createdAt || '--';

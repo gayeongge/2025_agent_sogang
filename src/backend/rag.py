@@ -253,7 +253,12 @@ class RAGService:
                 },
             )
 
-    def record_action_execution(self, execution: ActionExecution) -> None:
+    def record_action_execution(
+        self,
+        execution: ActionExecution,
+        *,
+        recovery_status: str = "pending",
+    ) -> None:
         summary = self._format_summary(execution.actions)
         executed_at = execution.executed_at or utcnow_iso()
         results = execution.results or []
@@ -263,6 +268,7 @@ class RAGService:
             f"시나리오 코드: {execution.scenario_code}",
             f"결과 상태: executed",
             f"실행 시각(UTC): {executed_at}",
+            f"Recovery status: {recovery_status}",
             "조치 목록:",
         ]
         for result in results:
@@ -284,6 +290,7 @@ class RAGService:
                 "type": "action_execution",
                 "scenario_code": execution.scenario_code,
                 "status": "executed",
+                "recovery_status": recovery_status,
                 "title": f"{execution.scenario_title} 승인된 조치",
                 "summary": f"승인된 조치: {summary}",
                 "actions": execution.actions,
@@ -291,7 +298,12 @@ class RAGService:
             },
         )
 
-    def record_action_deferred(self, execution: ActionExecution) -> None:
+    def record_action_deferred(
+        self,
+        execution: ActionExecution,
+        *,
+        recovery_status: str = "not_executed",
+    ) -> None:
         summary = self._format_summary(execution.actions)
         recorded_at = utcnow_iso()
 
@@ -300,6 +312,7 @@ class RAGService:
             f"시나리오 코드: {execution.scenario_code}",
             "결과 상태: deferred",
             f"보류 시각(UTC): {recorded_at}",
+            f"Recovery status: {recovery_status}",
             "검토 필요 조치:",
         ]
         for action in execution.actions:
@@ -312,12 +325,45 @@ class RAGService:
                 "type": "action_execution",
                 "scenario_code": execution.scenario_code,
                 "status": "deferred",
+                "recovery_status": recovery_status,
                 "title": f"{execution.scenario_title} 보류된 조치",
                 "summary": f"보류된 조치: {summary}",
                 "actions": execution.actions,
                 "created_at": recorded_at,
             },
         )
+
+    def mark_action_recovery(
+        self,
+        execution_id: str,
+        status: str,
+        *,
+        resolved_at: Optional[str] = None,
+        metrics: Optional[Dict[str, float]] = None,
+    ) -> bool:
+        doc_key = f"action_execution:{execution_id}:executed"
+        resolved_at = resolved_at or utcnow_iso()
+
+        with self._lock:
+            entry = self._documents_by_key.get(doc_key)
+            if not entry:
+                return False
+            metadata = entry.get("metadata")
+            if not isinstance(metadata, dict):
+                metadata = {}
+
+            metadata["recovery_status"] = status
+            metadata["recovered_at"] = resolved_at
+            if metrics:
+                metadata["recovery_metrics"] = metrics
+            entry["metadata"] = normalize_legacy_payload(metadata)
+            self._documents_by_key[doc_key] = normalize_legacy_payload(entry)
+            self._persist_documents()
+            self._vectorstore = None
+
+        # Lazy rebuild (if embeddings configured) to keep FAISS metadata consistent.
+        self._ensure_vectorstore(load_only=False)
+        return True
 
     def record_incident_report(self, report: "IncidentReport") -> None:
         content_lines = [
@@ -354,6 +400,7 @@ class RAGService:
                 "type": "incident_report",
                 "scenario_code": report.scenario_code,
                 "status": "report",
+                "recovery_status": "not_applicable",
                 "title": report.title,
                 "summary": report.summary or report.title,
                 "actions": report.action_items,

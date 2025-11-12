@@ -1058,5 +1058,922 @@
       "created_at": "2025-11-10T05:34:42+00:00",
       "doc_key": "action_execution:321533c2-6b92-4f02-913b-ac63dbb2a73f:executed"
     }
+  },
+  {
+    "doc_key": "incident_report:89961de5-858e-48f6-a37b-cc1042acb666",
+    "content": "Incident report snapshot: Nginx 5xx surge on checkout API\n시나리오 코드: http_5xx_surge\n작성 시각(UTC): 2025-11-11T09:00:05+00:00\n\n요약:\n2025년 11월 11일 09:00 UTC에 체크아웃 API에서 Nginx 5xx 오류가 급증하여 HTTP 오류율이 12.91%로 임계치인 5%를 초과했습니다. 이로 인해 CPU 사용률도 83.44%로 증가하였습니다.\n\n근본 원인:\n가설로는 최근 배포가 요청 검증에서 회귀를 도입했거나, 업스트림 결제 제공자의 타임아웃이 게이트웨이에 연쇄적으로 영향을 미쳤을 가능성이 있습니다. 또한, 자동 스케일링 그룹에서 따뜻한 인스턴스가 부족하여 콜드 스타트 실패가 발생했을 수 있습니다.\n\n영향 범위:\n고객은 체크아웃 API를 통해 결제 과정에서 오류를 경험하고 있으며, 이로 인해 서비스 이용에 불편을 겪고 있습니다. 특히, 결제 처리 지연으로 인해 고객의 이탈이 우려됩니다.\n\n조치 항목:\n- Roll back checkout-service to build #20250925.2 via MCP\n- Scale gateway pool to 2× to absorb traffic spike\n- Notify product manager in #ops-incident\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.\n- 체크아웃 서비스의 빌드를 #20250925.2로 롤백합니다. (사유: 최근 배포가 문제를 일으킨 것으로 추정됨)\n- 게이트웨이 풀을 2배로 확장하여 트래픽 급증을 흡수합니다. (사유: 현재의 CPU 사용률이 임계치를 초과하고 있어 추가 인스턴스가 필요함)\n- 운영 사고 채널(#ops-incident)에서 제품 관리자에게 알립니다. (사유: 상황을 공유하여 신속한 대응을 유도하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 업스트림 결제 제공자의 상태를 모니터링하여 추가적인 타임아웃 문제가 발생하지 않는지 점검합니다.",
+    "created_at": "2025-11-11T09:00:05+00:00",
+    "title": "Nginx 5xx surge on checkout API",
+    "summary": "2025년 11월 11일 09:00 UTC에 체크아웃 API에서 Nginx 5xx 오류가 급증하여 HTTP 오류율이 12.91%로 임계치인 5%를 초과했습니다. 이로 인해 CPU 사용률도 83.44%로 증가하였습니다.",
+    "scenario_code": "http_5xx_surge",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "http_5xx_surge",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Nginx 5xx surge on checkout API",
+      "summary": "2025년 11월 11일 09:00 UTC에 체크아웃 API에서 Nginx 5xx 오류가 급증하여 HTTP 오류율이 12.91%로 임계치인 5%를 초과했습니다. 이로 인해 CPU 사용률도 83.44%로 증가하였습니다.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.",
+        "체크아웃 서비스의 빌드를 #20250925.2로 롤백합니다. (사유: 최근 배포가 문제를 일으킨 것으로 추정됨)",
+        "게이트웨이 풀을 2배로 확장하여 트래픽 급증을 흡수합니다. (사유: 현재의 CPU 사용률이 임계치를 초과하고 있어 추가 인스턴스가 필요함)",
+        "운영 사고 채널(#ops-incident)에서 제품 관리자에게 알립니다. (사유: 상황을 공유하여 신속한 대응을 유도하기 위함)"
+      ],
+      "created_at": "2025-11-11T09:00:05+00:00",
+      "doc_key": "incident_report:89961de5-858e-48f6-a37b-cc1042acb666"
+    }
+  },
+  {
+    "doc_key": "action_execution:a0ab9c30-1c8b-4c15-b9d1-60eacdb2ebd9:executed",
+    "content": "승인된 조치 실행 기록 (Nginx 5xx surge on checkout API)\n시나리오 코드: http_5xx_surge\n결과 상태: executed\n실행 시각(UTC): 2025-11-11T09:00:27+00:00\nRecovery status: pending\n조치 목록:\n- Roll back checkout-service to build #20250925.2 via MCP -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for 'Roll back checkout-service to build #20250925.2 via MCP'.\n- Scale gateway pool to 2× to absorb traffic spike -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for 'Scale gateway pool to 2× to absorb traffic spike'.\n- Notify product manager in #ops-incident -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for 'Notify product manager in #ops-incident'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다. -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for '체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.'.\n- 체크아웃 서비스의 빌드를 #20250925.2로 롤백합니다. (사유: 최근 배포가 문제를 일으킨 것으로 추정됨) -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for '체크아웃 서비스의 빌드를 #20250925.2로 롤백합니다. (사유: 최근 배포가 문제를 일으킨 것으로 추정됨)'.\n- 게이트웨이 풀을 2배로 확장하여 트래픽 급증을 흡수합니다. (사유: 현재의 CPU 사용률이 임계치를 초과하고 있어 추가 인스턴스가 필요함) -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for '게이트웨이 풀을 2배로 확장하여 트래픽 급증을 흡수합니다. (사유: 현재의 CPU 사용률이 임계치를 초과하고 있어 추가 인스턴스가 필요함)'.\n- 운영 사고 채널(#ops-incident)에서 제품 관리자에게 알립니다. (사유: 상황을 공유하여 신속한 대응을 유도하기 위함) -> status=success, 실행시각=2025-11-11T09:00:27+00:00, 비고=Simulated run completed for '운영 사고 채널(#ops-incident)에서 제품 관리자에게 알립니다. (사유: 상황을 공유하여 신속한 대응을 유도하기 위함)'.",
+    "created_at": "2025-11-11T09:00:27+00:00",
+    "title": "Nginx 5xx surge on checkout API 승인된 조치",
+    "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "http_5xx_surge",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "http_5xx_surge",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Nginx 5xx surge on checkout API 승인된 조치",
+      "summary": "승인된 조치: Roll back checkout-service to build #20250925.2 via MCP, Scale gateway pool to 2× to absorb traffic spike, Notify product manager in #ops-incident, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Roll back checkout-service to build #20250925.2 via MCP",
+        "Scale gateway pool to 2× to absorb traffic spike",
+        "Notify product manager in #ops-incident",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "체크아웃 서비스 롤백: 빌드 #20250925.2로 롤백하여 문제가 발생하기 전의 안정된 상태로 복구합니다.",
+        "체크아웃 서비스의 빌드를 #20250925.2로 롤백합니다. (사유: 최근 배포가 문제를 일으킨 것으로 추정됨)",
+        "게이트웨이 풀을 2배로 확장하여 트래픽 급증을 흡수합니다. (사유: 현재의 CPU 사용률이 임계치를 초과하고 있어 추가 인스턴스가 필요함)",
+        "운영 사고 채널(#ops-incident)에서 제품 관리자에게 알립니다. (사유: 상황을 공유하여 신속한 대응을 유도하기 위함)"
+      ],
+      "created_at": "2025-11-11T09:00:27+00:00",
+      "doc_key": "action_execution:a0ab9c30-1c8b-4c15-b9d1-60eacdb2ebd9:executed",
+      "recovered_at": "2025-11-11T09:00:47+00:00",
+      "recovery_metrics": {
+        "http": 0.0266,
+        "http_threshold": 0.05,
+        "cpu": 0.4981,
+        "cpu_threshold": 0.8
+      }
+    }
+  },
+  {
+    "doc_key": "incident_report:7c0b8fef-9e7c-4e74-8f0e-21ad74383737",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:22:51+00:00\n\n요약:\n2025년 11월 12일 08:22:51 UTC에 Edge 노드에서 CPU 사용률이 0.7116으로 임계치인 0.7000을 초과했습니다. 이로 인해 서비스에 부하가 발생하였으며, HTTP 오류율은 0.0298로 임계치인 0.0500 이하로 유지되고 있습니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드에 집중된 트래픽이 유입되었거나, 새로운 Prometheus 스크랩 작업이 잘못된 간격으로 설정되어 과도한 부하를 초래했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있었을 수도 있습니다.\n\n영향 범위:\n고객에게는 서비스 응답 속도가 느려지거나 일시적인 지연이 발생할 수 있으며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다. 특히, Edge 노드에 집중된 트래픽으로 인해 특정 서비스의 가용성이 저하될 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용률을 낮추기 위함)\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)\n- 사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들에게 사고 상황을 알리고, 추가적인 조치를 취하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 상태를 모니터링하여 추가적인 CPU 스파이크가 발생하지 않는지 점검합니다.",
+    "created_at": "2025-11-12T08:22:51+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:22:51 UTC에 Edge 노드에서 CPU 사용률이 0.7116으로 임계치인 0.7000을 초과했습니다. 이로 인해 서비스에 부하가 발생하였으며, HTTP 오류율은 0.0298로 임계치인 0.0500 이하로 유지되고 있습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:22:51 UTC에 Edge 노드에서 CPU 사용률이 0.7116으로 임계치인 0.7000을 초과했습니다. 이로 인해 서비스에 부하가 발생하였으며, HTTP 오류율은 0.0298로 임계치인 0.0500 이하로 유지되고 있습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용률을 낮추기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)",
+        "사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들에게 사고 상황을 알리고, 추가적인 조치를 취하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:22:51+00:00",
+      "doc_key": "incident_report:7c0b8fef-9e7c-4e74-8f0e-21ad74383737"
+    }
+  },
+  {
+    "doc_key": "action_execution:eca1e380-24be-4801-bc1c-3df7a9347c9b:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:23:12+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용률을 낮추기 위함) -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용률을 낮추기 위함)'.\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함) -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for '실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)'.\n- 사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들에게 사고 상황을 알리고, 추가적인 조치를 취하기 위함) -> status=success, 실행시각=2025-11-12T08:23:12+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들에게 사고 상황을 알리고, 추가적인 조치를 취하기 위함)'.",
+    "created_at": "2025-11-12T08:23:12+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용률을 낮추기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)",
+        "사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들에게 사고 상황을 알리고, 추가적인 조치를 취하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:23:12+00:00",
+      "doc_key": "action_execution:eca1e380-24be-4801-bc1c-3df7a9347c9b:executed",
+      "recovered_at": "2025-11-12T08:23:41+00:00",
+      "recovery_metrics": {
+        "http": 0.0246,
+        "http_threshold": 0.05,
+        "cpu": 0.3915,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "incident_report:141e8f04-11ea-4abe-9c99-e4059feaa427",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:24:21+00:00\n\n요약:\n2025년 11월 12일 08:24:21 UTC에 Edge 노드에서 CPU 사용량이 92%를 초과하여 임계치를 초과하는 상황이 발생했습니다. 이로 인해 HTTP 오류율도 증가하여 서비스에 영향을 미치고 있습니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드에 집중된 트래픽이 유입되었거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 인해 과도한 부하를 초래했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있는 것도 원인일 수 있습니다.\n\n영향 범위:\n고객에게는 서비스 응답 지연 및 HTTP 오류가 발생하여 사용자 경험이 저하되었습니다. 특히, 엣지 노드에 집중된 트래픽으로 인해 특정 사용자 세션이 불안정해질 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 부하를 줄이기 위함)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 과도한 CPU 사용을 방지하기 위해 스크랩 빈도를 줄이기 위함)\n- 사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들이 상황을 인지하고 필요한 조치를 취할 수 있도록 하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 효과를 모니터링하여 추가 조치가 필요한지 평가합니다.",
+    "created_at": "2025-11-12T08:24:21+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:24:21 UTC에 Edge 노드에서 CPU 사용량이 92%를 초과하여 임계치를 초과하는 상황이 발생했습니다. 이로 인해 HTTP 오류율도 증가하여 서비스에 영향을 미치고 있습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:24:21 UTC에 Edge 노드에서 CPU 사용량이 92%를 초과하여 임계치를 초과하는 상황이 발생했습니다. 이로 인해 HTTP 오류율도 증가하여 서비스에 영향을 미치고 있습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 부하를 줄이기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 과도한 CPU 사용을 방지하기 위해 스크랩 빈도를 줄이기 위함)",
+        "사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들이 상황을 인지하고 필요한 조치를 취할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:24:21+00:00",
+      "doc_key": "incident_report:141e8f04-11ea-4abe-9c99-e4059feaa427"
+    }
+  },
+  {
+    "doc_key": "incident_report:960a627b-5eb9-4087-ad07-cf51a4c100b2",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:25:34+00:00\n\n요약:\n2025년 11월 12일 08:25:34 UTC에 Edge 노드에서 CPU 사용량이 0.8524로 임계치인 0.7000을 초과하였고, HTTP 오류율도 0.0815로 임계치인 0.0500을 초과했습니다. 이는 특정 Edge 노드에서 CPU 자원이 과도하게 사용되고 있음을 나타냅니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드에 집중된 트래픽이 유입되었거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 실행되고 있거나, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 가능성이 있습니다. 특히 cpu_usage가 92% 이상으로 10분간 지속된 점과 로드 밸런서의 스티키 세션이 특정 노드로 편향된 점이 이를 뒷받침합니다.\n\n영향 범위:\n고객에게는 서비스 응답 시간이 지연되거나 오류가 발생할 수 있으며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다. 또한, 서비스의 안정성에 대한 신뢰도가 저하될 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함입니다.)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있을 가능성이 있기 때문입니다.)\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 상황을 공유하여 신속한 대응을 유도하기 위함입니다.)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 스티키 세션 설정을 검토하여 불균형한 트래픽을 방지합니다.",
+    "created_at": "2025-11-12T08:25:34+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:25:34 UTC에 Edge 노드에서 CPU 사용량이 0.8524로 임계치인 0.7000을 초과하였고, HTTP 오류율도 0.0815로 임계치인 0.0500을 초과했습니다. 이는 특정 Edge 노드에서 CPU 자원이 과도하게 사용되고 있음을 나타냅니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:25:34 UTC에 Edge 노드에서 CPU 사용량이 0.8524로 임계치인 0.7000을 초과하였고, HTTP 오류율도 0.0815로 임계치인 0.0500을 초과했습니다. 이는 특정 Edge 노드에서 CPU 자원이 과도하게 사용되고 있음을 나타냅니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함입니다.)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있을 가능성이 있기 때문입니다.)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 상황을 공유하여 신속한 대응을 유도하기 위함입니다.)"
+      ],
+      "created_at": "2025-11-12T08:25:34+00:00",
+      "doc_key": "incident_report:960a627b-5eb9-4087-ad07-cf51a4c100b2"
+    }
+  },
+  {
+    "doc_key": "incident_report:e934aa23-c72e-466d-87f6-8083338a9b46",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:26:48+00:00\n\n요약:\n2025년 11월 12일 08:26:48 UTC에 Edge 노드에서 CPU 사용량이 0.8422로 임계치 0.7000을 초과하였으며, HTTP 오류율도 0.1050으로 임계치 0.0500을 초과하였습니다. 이는 Edge 노드에 집중된 트래픽과 관련이 있을 것으로 보입니다.\n\n근본 원인:\n가설에 따르면, Ashburn 엣지 노드가 집중된 트래픽을 받고 있거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 인해 과도한 CPU 사용을 초래했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 가능성도 있습니다.\n\n영향 범위:\n고객에게는 서비스 지연 및 오류가 발생할 수 있으며, 특히 HTTP 오류율이 증가함에 따라 사용자 경험이 저하될 수 있습니다. 이는 서비스의 신뢰성에 부정적인 영향을 미칠 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 상태를 모니터링하여 추가적인 조정이 필요한지 점검합니다.",
+    "created_at": "2025-11-12T08:26:48+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:26:48 UTC에 Edge 노드에서 CPU 사용량이 0.8422로 임계치 0.7000을 초과하였으며, HTTP 오류율도 0.1050으로 임계치 0.0500을 초과하였습니다. 이는 Edge 노드에 집중된 트래픽과 관련이 있을 것으로 보입니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:26:48 UTC에 Edge 노드에서 CPU 사용량이 0.8422로 임계치 0.7000을 초과하였으며, HTTP 오류율도 0.1050으로 임계치 0.0500을 초과하였습니다. 이는 Edge 노드에 집중된 트래픽과 관련이 있을 것으로 보입니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:26:48+00:00",
+      "doc_key": "incident_report:e934aa23-c72e-466d-87f6-8083338a9b46"
+    }
+  },
+  {
+    "doc_key": "incident_report:6d2a3797-bd74-4ab9-86aa-3b9502709694",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:28:04+00:00\n\n요약:\n2025년 11월 12일 08:28:04 UTC에 Edge node의 CPU 사용량이 0.8204로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1289로 임계치 0.0500을 초과했습니다. 이는 시스템에 부하가 집중된 것으로 보입니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드에 집중된 트래픽이 유입되었거나, 새로운 Prometheus 스크래핑 작업이 잘못된 간격으로 설정되어 과도한 리소스를 소모했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있었을 수 있습니다.\n\n영향 범위:\n고객에게는 서비스 응답 속도 저하 및 오류 발생이 우려되며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다. 특히, HTTP 오류율의 증가로 인해 서비스의 신뢰성이 저하될 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)\n- 실험용 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못된 스크랩 간격으로 인해 CPU 사용량이 증가했을 가능성이 있기 때문)\n- 사고 채널에 알림을 보내어 상황을 널리 알립니다. (사유: 팀원들이 상황을 인지하고 적절한 조치를 취할 수 있도록 하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하여 추가적인 원인을 분석합니다.\n- 로드 밸런서의 트래픽 분산 상태를 모니터링하여 문제 해결 후에도 지속적인 감시를 진행합니다.",
+    "created_at": "2025-11-12T08:28:04+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:28:04 UTC에 Edge node의 CPU 사용량이 0.8204로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1289로 임계치 0.0500을 초과했습니다. 이는 시스템에 부하가 집중된 것으로 보입니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:28:04 UTC에 Edge node의 CPU 사용량이 0.8204로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1289로 임계치 0.0500을 초과했습니다. 이는 시스템에 부하가 집중된 것으로 보입니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못된 스크랩 간격으로 인해 CPU 사용량이 증가했을 가능성이 있기 때문)",
+        "사고 채널에 알림을 보내어 상황을 널리 알립니다. (사유: 팀원들이 상황을 인지하고 적절한 조치를 취할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:28:04+00:00",
+      "doc_key": "incident_report:6d2a3797-bd74-4ab9-86aa-3b9502709694"
+    }
+  },
+  {
+    "doc_key": "incident_report:409fef43-11c7-4326-bfd2-77e5be755352",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:29:19+00:00\n\n요약:\n2025년 11월 12일 08:29:19 UTC에 Edge node에서 CPU 사용량이 0.8795로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1350으로 임계치 0.0500을 초과했습니다. 이는 특정 Edge node에 집중된 트래픽과 관련이 있을 가능성이 있습니다.\n\n근본 원인:\n가설로는 Ashburn Edge node가 집중된 트래픽을 받고 있거나, 새로운 Prometheus 스크랩 작업이 잘못된 간격으로 설정되어 과도한 리소스를 사용하고 있을 수 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 가능성도 있습니다.\n\n영향 범위:\n고객은 Edge node에서 제공되는 서비스의 응답 속도가 느려지거나, HTTP 오류가 발생하여 서비스 이용에 불편을 겪을 수 있습니다. 이는 고객 경험에 부정적인 영향을 미칠 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 설정으로 인한 리소스 과다 사용을 방지하기 위함)\n- 사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 효과를 모니터링하여 추가 조정이 필요한지 점검합니다.",
+    "created_at": "2025-11-12T08:29:19+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:29:19 UTC에 Edge node에서 CPU 사용량이 0.8795로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1350으로 임계치 0.0500을 초과했습니다. 이는 특정 Edge node에 집중된 트래픽과 관련이 있을 가능성이 있습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:29:19 UTC에 Edge node에서 CPU 사용량이 0.8795로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1350으로 임계치 0.0500을 초과했습니다. 이는 특정 Edge node에 집중된 트래픽과 관련이 있을 가능성이 있습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 설정으로 인한 리소스 과다 사용을 방지하기 위함)",
+        "사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:29:19+00:00",
+      "doc_key": "incident_report:409fef43-11c7-4326-bfd2-77e5be755352"
+    }
+  },
+  {
+    "doc_key": "incident_report:bca50dc9-62d6-4ff8-a190-18a457efb759",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:30:33+00:00\n\n요약:\n2025년 11월 12일 08:30 UTC에 Edge node에서 CPU 사용량이 0.8704로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1040으로 임계치 0.0500을 초과했습니다. 이는 특정 Edge node에 집중된 트래픽과 관련이 있을 것으로 보입니다.\n\n근본 원인:\n가설에 따르면, Ashburn Edge node가 집중된 트래픽을 수신하거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 인해 과부하가 발생했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 수도 있습니다.\n\n영향 범위:\n고객은 서비스 응답 속도 저하 및 HTTP 오류 증가로 인해 불편을 겪을 수 있으며, 이는 고객 신뢰도에 부정적인 영향을 미칠 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽 균형을 맞추기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하고 있습니다.)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있습니다.)\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 관련 팀이 문제를 인지하고 즉각적으로 대응할 수 있도록 합니다.)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분배 상태를 정기적으로 점검합니다.",
+    "created_at": "2025-11-12T08:30:33+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:30 UTC에 Edge node에서 CPU 사용량이 0.8704로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1040으로 임계치 0.0500을 초과했습니다. 이는 특정 Edge node에 집중된 트래픽과 관련이 있을 것으로 보입니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:30 UTC에 Edge node에서 CPU 사용량이 0.8704로 임계치 0.7000을 초과하였고, HTTP 오류율도 0.1040으로 임계치 0.0500을 초과했습니다. 이는 특정 Edge node에 집중된 트래픽과 관련이 있을 것으로 보입니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽 균형을 맞추기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하고 있습니다.)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있습니다.)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 관련 팀이 문제를 인지하고 즉각적으로 대응할 수 있도록 합니다.)"
+      ],
+      "created_at": "2025-11-12T08:30:33+00:00",
+      "doc_key": "incident_report:bca50dc9-62d6-4ff8-a190-18a457efb759"
+    }
+  },
+  {
+    "doc_key": "incident_report:89400f35-7f01-4f17-8201-24f29ed03112",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:31:34+00:00\n\n요약:\n2025년 11월 12일 08:31:34 UTC에 Edge 노드에서 CPU 사용량이 0.7130으로 임계치인 0.7000을 초과하여 발생한 사고입니다. 이로 인해 시스템의 성능 저하가 우려됩니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드에 집중된 트래픽이 발생했거나, 새로운 Prometheus 스크랩 작업이 잘못된 간격으로 설정되어 과도한 CPU 사용을 초래했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 수도 있습니다.\n\n영향 범위:\n고객에게는 서비스 응답 속도가 느려지거나 일시적인 장애가 발생할 수 있으며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 로드 밸런서 가중치 업데이트하여 트래픽 재분배 - 사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함.\n- 실험용 대시보드의 스크랩 간격 조정 - 사유: 과도한 CPU 사용을 유발하는 스크랩 작업을 완화하기 위함.\n- 사고 채널에 알림 - 사유: 사고에 대한 가시성을 높이고 팀원들이 상황을 인지할 수 있도록 하기 위함.\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하기 - 사유: 문제의 근본 원인을 파악하기 위해.\n- 로드 밸런서의 트래픽 패턴을 모니터링하여 추가적인 CPU 스파이크 여부 확인하기 - 사유: 향후 유사한 사고를 예방하기 위해.",
+    "created_at": "2025-11-12T08:31:34+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:31:34 UTC에 Edge 노드에서 CPU 사용량이 0.7130으로 임계치인 0.7000을 초과하여 발생한 사고입니다. 이로 인해 시스템의 성능 저하가 우려됩니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:31:34 UTC에 Edge 노드에서 CPU 사용량이 0.7130으로 임계치인 0.7000을 초과하여 발생한 사고입니다. 이로 인해 시스템의 성능 저하가 우려됩니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치 업데이트하여 트래픽 재분배 - 사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함.",
+        "실험용 대시보드의 스크랩 간격 조정 - 사유: 과도한 CPU 사용을 유발하는 스크랩 작업을 완화하기 위함.",
+        "사고 채널에 알림 - 사유: 사고에 대한 가시성을 높이고 팀원들이 상황을 인지할 수 있도록 하기 위함."
+      ],
+      "created_at": "2025-11-12T08:31:34+00:00",
+      "doc_key": "incident_report:89400f35-7f01-4f17-8201-24f29ed03112"
+    }
+  },
+  {
+    "doc_key": "incident_report:58a257bb-913e-4bcb-85c8-e83d71f92759",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:33:04+00:00\n\n요약:\n2025년 11월 12일 08:33 UTC에 Edge node에서 CPU 사용량이 94.81%로 임계치를 초과했습니다. 이로 인해 HTTP 오류율도 0.1217로 증가하여 서비스 안정성에 문제가 발생했습니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드가 집중적인 트래픽을 받고 있거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 인해 과도한 부하를 받고 있을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 수도 있습니다.\n\n영향 범위:\n고객은 서비스 응답 지연 및 오류를 경험할 수 있으며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다. 특히, HTTP 오류율이 증가함에 따라 서비스 신뢰성에 대한 우려가 커질 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하였으므로, 이를 분산시켜야 합니다.)\n- 실험 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업이 CPU 사용량을 증가시킬 수 있으므로, 이를 조정해야 합니다.)\n- 사고 채널에 알림을 보내어 더 넓은 가시성을 확보합니다. (사유: 사고 상황을 팀원들에게 알리고, 신속한 대응을 위해 정보 공유가 필요합니다.)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분배 상태를 지속적으로 모니터링합니다.",
+    "created_at": "2025-11-12T08:33:04+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:33 UTC에 Edge node에서 CPU 사용량이 94.81%로 임계치를 초과했습니다. 이로 인해 HTTP 오류율도 0.1217로 증가하여 서비스 안정성에 문제가 발생했습니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:33 UTC에 Edge node에서 CPU 사용량이 94.81%로 임계치를 초과했습니다. 이로 인해 HTTP 오류율도 0.1217로 증가하여 서비스 안정성에 문제가 발생했습니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하였으므로, 이를 분산시켜야 합니다.)",
+        "실험 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업이 CPU 사용량을 증가시킬 수 있으므로, 이를 조정해야 합니다.)",
+        "사고 채널에 알림을 보내어 더 넓은 가시성을 확보합니다. (사유: 사고 상황을 팀원들에게 알리고, 신속한 대응을 위해 정보 공유가 필요합니다.)"
+      ],
+      "created_at": "2025-11-12T08:33:04+00:00",
+      "doc_key": "incident_report:58a257bb-913e-4bcb-85c8-e83d71f92759"
+    }
+  },
+  {
+    "doc_key": "incident_report:dbf789e5-44a1-43ee-b585-c7c19bb4cb79",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:34:22+00:00\n\n요약:\n2025년 11월 12일 08:34:22 UTC에 Edge node의 CPU 사용량이 93.57%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.0977로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.\n\n근본 원인:\n가설에 따르면, Ashburn 엣지 노드가 집중적인 트래픽을 받고 있거나, 새로운 Prometheus 스크랩 작업이 잘못된 간격으로 실행되고 있거나, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 수 있습니다. 특히, cpu_usage가 10분 이상 92% 이상 유지된 점은 트래픽 불균형이나 작업 설정의 문제를 시사합니다.\n\n영향 범위:\n고객에게는 서비스 응답 시간이 지연되거나 오류가 발생할 수 있으며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다. 또한, 시스템의 안정성에도 위협이 될 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 불균형한 트래픽 분산으로 인한 CPU 사용량 증가를 완화하기 위함)\n- 실험적인 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 사고 상황을 인지하고 대응할 수 있도록 하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 상태를 지속적으로 모니터링합니다.",
+    "created_at": "2025-11-12T08:34:22+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:34:22 UTC에 Edge node의 CPU 사용량이 93.57%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.0977로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:34:22 UTC에 Edge node의 CPU 사용량이 93.57%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.0977로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 불균형한 트래픽 분산으로 인한 CPU 사용량 증가를 완화하기 위함)",
+        "실험적인 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 사고 상황을 인지하고 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:34:22+00:00",
+      "doc_key": "incident_report:dbf789e5-44a1-43ee-b585-c7c19bb4cb79"
+    }
+  },
+  {
+    "doc_key": "incident_report:f11ed588-51fd-4780-876a-8d88014d6ba8",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:35:37+00:00\n\n요약:\n2025년 11월 12일 08:35:37 UTC에 Edge node의 CPU 사용량이 85.35%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.0926으로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드가 집중적인 트래픽을 받고 있거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 인해 과부하가 발생했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있는 경우도 원인으로 작용할 수 있습니다.\n\n영향 범위:\n고객에게는 서비스 응답 지연 및 HTTP 오류 발생으로 인해 사용자 경험이 저하될 수 있으며, 이는 서비스의 신뢰성에 부정적인 영향을 미칠 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 낮추기 위함)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 방지하기 위함)\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 현재 상황을 공유하여 신속한 대응을 촉진하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하여 추가적인 원인을 분석합니다.\n- 로드 밸런서의 트래픽 분배 상태를 지속적으로 모니터링하여 재발 방지 대책을 마련합니다.",
+    "created_at": "2025-11-12T08:35:37+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:35:37 UTC에 Edge node의 CPU 사용량이 85.35%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.0926으로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:35:37 UTC에 Edge node의 CPU 사용량이 85.35%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.0926으로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 낮추기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 방지하기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 현재 상황을 공유하여 신속한 대응을 촉진하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:35:37+00:00",
+      "doc_key": "incident_report:f11ed588-51fd-4780-876a-8d88014d6ba8"
+    }
+  },
+  {
+    "doc_key": "incident_report:273e1c37-4332-4578-9a05-5e53314a30d2",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:36:48+00:00\n\n요약:\n2025년 11월 12일 08:36:48 UTC에 Edge node의 CPU 사용량이 93.99%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.1484로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드가 집중적인 트래픽 폭주를 받고 있거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 인해 과부하가 발생했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있어 CPU 사용량이 증가했을 수 있습니다.\n\n영향 범위:\n고객은 서비스 응답 지연 및 HTTP 오류를 경험할 수 있으며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다. 특히, 엣지 노드에 집중된 트래픽으로 인해 서비스의 가용성이 저하될 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 줄이고 서비스 가용성을 높이기 위함)\n- 실험적인 대시보드의 스크랩 간격을 조정하여 스크랩 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 완화하기 위함)\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀 내에서 상황을 공유하고 신속한 대응을 위해)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하여 추가 원인을 분석합니다.\n- 로드 밸런서의 트래픽 분산 상태를 모니터링하여 재조정 후 효과를 확인합니다.",
+    "created_at": "2025-11-12T08:36:48+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:36:48 UTC에 Edge node의 CPU 사용량이 93.99%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.1484로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:36:48 UTC에 Edge node의 CPU 사용량이 93.99%로 임계치인 70%를 초과하였고, HTTP 오류율 또한 0.1484로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 추정됩니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 줄이고 서비스 가용성을 높이기 위함)",
+        "실험적인 대시보드의 스크랩 간격을 조정하여 스크랩 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 완화하기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀 내에서 상황을 공유하고 신속한 대응을 위해)"
+      ],
+      "created_at": "2025-11-12T08:36:48+00:00",
+      "doc_key": "incident_report:273e1c37-4332-4578-9a05-5e53314a30d2"
+    }
+  },
+  {
+    "doc_key": "incident_report:6f7e7e93-2dd8-457a-8657-efd8cfc68d76",
+    "content": "Incident report snapshot: Edge node CPU spike\n시나리오 코드: cpu_spike_core\n작성 시각(UTC): 2025-11-12T08:38:05+00:00\n\n요약:\n2025년 11월 12일 08:38:05 UTC에 Edge node의 CPU 사용량이 92.74%로 임계치인 70%를 초과하였고, HTTP 오류율도 0.0924로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 보입니다.\n\n근본 원인:\n가설로는 Ashburn 엣지 노드가 집중적인 트래픽을 받거나, 새로운 Prometheus 스크랩 작업이 잘못 구성된 간격으로 인해 과도한 부하를 유발했을 가능성이 있습니다. 또한, 백그라운드 배치 작업이 공유 코어에 고정되어 있을 수도 있습니다.\n\n영향 범위:\n고객에게는 서비스의 응답 속도가 느려지거나 오류가 발생할 수 있으며, 이는 사용자 경험에 부정적인 영향을 미칠 수 있습니다. 또한, 서비스의 가용성에도 영향을 줄 수 있습니다.\n\n조치 항목:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)\n- 사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 대응할 수 있도록 하기 위함)\n\n후속 조치:\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인합니다.\n- 로드 밸런서의 트래픽 분산 상태를 모니터링하여 추가적인 조정이 필요한지 점검합니다.",
+    "created_at": "2025-11-12T08:38:05+00:00",
+    "title": "Edge node CPU spike",
+    "summary": "2025년 11월 12일 08:38:05 UTC에 Edge node의 CPU 사용량이 92.74%로 임계치인 70%를 초과하였고, HTTP 오류율도 0.0924로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 보입니다.",
+    "scenario_code": "cpu_spike_core",
+    "status": "report",
+    "type": "incident_report",
+    "metadata": {
+      "type": "incident_report",
+      "scenario_code": "cpu_spike_core",
+      "status": "report",
+      "recovery_status": "not_applicable",
+      "title": "Edge node CPU spike",
+      "summary": "2025년 11월 12일 08:38:05 UTC에 Edge node의 CPU 사용량이 92.74%로 임계치인 70%를 초과하였고, HTTP 오류율도 0.0924로 5%를 초과했습니다. 이는 집중적인 트래픽 증가 또는 잘못 구성된 스크랩 작업으로 인한 것으로 보입니다.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)",
+        "사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:05+00:00",
+      "doc_key": "incident_report:6f7e7e93-2dd8-457a-8657-efd8cfc68d76"
+    }
+  },
+  {
+    "doc_key": "action_execution:e60837fe-f793-4e30-887c-31f0fbad5dee:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-12T08:38:23+00:00\nRecovery status: not_executed\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 부하를 줄이기 위함)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 과도한 CPU 사용을 방지하기 위해 스크랩 빈도를 줄이기 위함)\n- 사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들이 상황을 인지하고 필요한 조치를 취할 수 있도록 하기 위함)",
+    "created_at": "2025-11-12T08:38:23+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "recovery_status": "not_executed",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 부하를 줄이기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 과도한 CPU 사용을 방지하기 위해 스크랩 빈도를 줄이기 위함)",
+        "사고 채널에 알림을 보내어 상황을 널리 공유합니다. (사유: 팀원들이 상황을 인지하고 필요한 조치를 취할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:23+00:00",
+      "doc_key": "action_execution:e60837fe-f793-4e30-887c-31f0fbad5dee:deferred"
+    }
+  },
+  {
+    "doc_key": "action_execution:00af667d-7e86-4ab8-a7c4-2abf06655ea2:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:24+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함입니다.) -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for '로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함입니다.)'.\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있을 가능성이 있기 때문입니다.) -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for '실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있을 가능성이 있기 때문입니다.)'.\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 상황을 공유하여 신속한 대응을 유도하기 위함입니다.) -> status=success, 실행시각=2025-11-12T08:38:24+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 상황을 공유하여 신속한 대응을 유도하기 위함입니다.)'.",
+    "created_at": "2025-11-12T08:38:24+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함입니다.)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있을 가능성이 있기 때문입니다.)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 상황을 공유하여 신속한 대응을 유도하기 위함입니다.)"
+      ],
+      "created_at": "2025-11-12T08:38:24+00:00",
+      "doc_key": "action_execution:00af667d-7e86-4ab8-a7c4-2abf06655ea2:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:e99dcacf-e866-4b49-9263-1ecd7c7fd267:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:25+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함) -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)'.\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함) -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for '실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)'.\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함) -> status=success, 실행시각=2025-11-12T08:38:25+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)'.",
+    "created_at": "2025-11-12T08:38:25+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:25+00:00",
+      "doc_key": "action_execution:e99dcacf-e866-4b49-9263-1ecd7c7fd267:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:d8e9c1d7-da00-467c-a69d-179d3b475d9c:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-12T08:38:26+00:00\nRecovery status: not_executed\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)\n- 실험용 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못된 스크랩 간격으로 인해 CPU 사용량이 증가했을 가능성이 있기 때문)\n- 사고 채널에 알림을 보내어 상황을 널리 알립니다. (사유: 팀원들이 상황을 인지하고 적절한 조치를 취할 수 있도록 하기 위함)",
+    "created_at": "2025-11-12T08:38:26+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "recovery_status": "not_executed",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못된 스크랩 간격으로 인해 CPU 사용량이 증가했을 가능성이 있기 때문)",
+        "사고 채널에 알림을 보내어 상황을 널리 알립니다. (사유: 팀원들이 상황을 인지하고 적절한 조치를 취할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:26+00:00",
+      "doc_key": "action_execution:d8e9c1d7-da00-467c-a69d-179d3b475d9c:deferred"
+    }
+  },
+  {
+    "doc_key": "action_execution:c0ab6dcb-c0c6-4db8-8312-1d3bcdb87945:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:27+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함) -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)'.\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 설정으로 인한 리소스 과다 사용을 방지하기 위함) -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for '실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 설정으로 인한 리소스 과다 사용을 방지하기 위함)'.\n- 사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함) -> status=success, 실행시각=2025-11-12T08:38:27+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)'.",
+    "created_at": "2025-11-12T08:38:27+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 특정 노드에 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 설정으로 인한 리소스 과다 사용을 방지하기 위함)",
+        "사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 신속하게 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:27+00:00",
+      "doc_key": "action_execution:c0ab6dcb-c0c6-4db8-8312-1d3bcdb87945:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:7da0c69c-9755-4a77-a423-367ecf8e9f79:deferred",
+    "content": "보류된 조치 계획 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: deferred\n보류 시각(UTC): 2025-11-12T08:38:27+00:00\nRecovery status: not_executed\n검토 필요 조치:\n- Rebalance traffic by updating load balancer weights\n- Throttle scrape interval for experimental dashboard\n- Open Jira outage ticket for visibility\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)\n- 트래픽 균형을 맞추기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하고 있습니다.)\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있습니다.)\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 관련 팀이 문제를 인지하고 즉각적으로 대응할 수 있도록 합니다.)",
+    "created_at": "2025-11-12T08:38:27+00:00",
+    "title": "Edge node CPU spike 보류된 조치",
+    "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "deferred",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "deferred",
+      "recovery_status": "not_executed",
+      "title": "Edge node CPU spike 보류된 조치",
+      "summary": "보류된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽 균형을 맞추기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하고 있습니다.)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 간격이 CPU 사용량을 증가시키고 있습니다.)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 관련 팀이 문제를 인지하고 즉각적으로 대응할 수 있도록 합니다.)"
+      ],
+      "created_at": "2025-11-12T08:38:27+00:00",
+      "doc_key": "action_execution:7da0c69c-9755-4a77-a423-367ecf8e9f79:deferred"
+    }
+  },
+  {
+    "doc_key": "action_execution:02e3773f-e163-433b-a7a1-8b750b9c9607:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:28+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 로드 밸런서 가중치 업데이트하여 트래픽 재분배 - 사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함. -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for '로드 밸런서 가중치 업데이트하여 트래픽 재분배 - 사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함.'.\n- 실험용 대시보드의 스크랩 간격 조정 - 사유: 과도한 CPU 사용을 유발하는 스크랩 작업을 완화하기 위함. -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for '실험용 대시보드의 스크랩 간격 조정 - 사유: 과도한 CPU 사용을 유발하는 스크랩 작업을 완화하기 위함.'.\n- 사고 채널에 알림 - 사유: 사고에 대한 가시성을 높이고 팀원들이 상황을 인지할 수 있도록 하기 위함. -> status=success, 실행시각=2025-11-12T08:38:28+00:00, 비고=Simulated run completed for '사고 채널에 알림 - 사유: 사고에 대한 가시성을 높이고 팀원들이 상황을 인지할 수 있도록 하기 위함.'.",
+    "created_at": "2025-11-12T08:38:28+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치 업데이트하여 트래픽 재분배 - 사유: 집중된 트래픽을 분산시켜 CPU 사용량을 줄이기 위함.",
+        "실험용 대시보드의 스크랩 간격 조정 - 사유: 과도한 CPU 사용을 유발하는 스크랩 작업을 완화하기 위함.",
+        "사고 채널에 알림 - 사유: 사고에 대한 가시성을 높이고 팀원들이 상황을 인지할 수 있도록 하기 위함."
+      ],
+      "created_at": "2025-11-12T08:38:28+00:00",
+      "doc_key": "action_execution:02e3773f-e163-433b-a7a1-8b750b9c9607:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:8e6518d4-4a87-41b0-bfe3-22432db7f3dd:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:29+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하였으므로, 이를 분산시켜야 합니다.) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하였으므로, 이를 분산시켜야 합니다.)'.\n- 실험 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업이 CPU 사용량을 증가시킬 수 있으므로, 이를 조정해야 합니다.) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '실험 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업이 CPU 사용량을 증가시킬 수 있으므로, 이를 조정해야 합니다.)'.\n- 사고 채널에 알림을 보내어 더 넓은 가시성을 확보합니다. (사유: 사고 상황을 팀원들에게 알리고, 신속한 대응을 위해 정보 공유가 필요합니다.) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 더 넓은 가시성을 확보합니다. (사유: 사고 상황을 팀원들에게 알리고, 신속한 대응을 위해 정보 공유가 필요합니다.)'.",
+    "created_at": "2025-11-12T08:38:29+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 특정 노드에 트래픽이 집중되어 CPU 사용량이 급증하였으므로, 이를 분산시켜야 합니다.)",
+        "실험 대시보드의 스크랩 간격을 조정하여 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업이 CPU 사용량을 증가시킬 수 있으므로, 이를 조정해야 합니다.)",
+        "사고 채널에 알림을 보내어 더 넓은 가시성을 확보합니다. (사유: 사고 상황을 팀원들에게 알리고, 신속한 대응을 위해 정보 공유가 필요합니다.)"
+      ],
+      "created_at": "2025-11-12T08:38:29+00:00",
+      "doc_key": "action_execution:8e6518d4-4a87-41b0-bfe3-22432db7f3dd:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:139d7d18-1fac-41dc-932a-dd8cefdaf978:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:29+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 불균형한 트래픽 분산으로 인한 CPU 사용량 증가를 완화하기 위함) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 불균형한 트래픽 분산으로 인한 CPU 사용량 증가를 완화하기 위함)'.\n- 실험적인 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '실험적인 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)'.\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 사고 상황을 인지하고 대응할 수 있도록 하기 위함) -> status=success, 실행시각=2025-11-12T08:38:29+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 사고 상황을 인지하고 대응할 수 있도록 하기 위함)'.",
+    "created_at": "2025-11-12T08:38:29+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 불균형한 트래픽 분산으로 인한 CPU 사용량 증가를 완화하기 위함)",
+        "실험적인 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못된 스크랩 간격으로 인한 CPU 부하를 줄이기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들이 사고 상황을 인지하고 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:29+00:00",
+      "doc_key": "action_execution:139d7d18-1fac-41dc-932a-dd8cefdaf978:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:a22d500a-fc63-4dc3-bf8f-54b06e99a229:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:30+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 낮추기 위함) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 낮추기 위함)'.\n- 실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 방지하기 위함) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 방지하기 위함)'.\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 현재 상황을 공유하여 신속한 대응을 촉진하기 위함) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 현재 상황을 공유하여 신속한 대응을 촉진하기 위함)'.",
+    "created_at": "2025-11-12T08:38:30+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "로드 밸런서 가중치를 업데이트하여 트래픽을 재분배합니다. (사유: 집중된 트래픽을 분산시켜 CPU 사용량을 낮추기 위함)",
+        "실험 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 방지하기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀원들에게 현재 상황을 공유하여 신속한 대응을 촉진하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:30+00:00",
+      "doc_key": "action_execution:a22d500a-fc63-4dc3-bf8f-54b06e99a229:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:63acfed4-c8fb-4d5f-bf49-0bef4fc91552:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:30+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 줄이고 서비스 가용성을 높이기 위함) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 줄이고 서비스 가용성을 높이기 위함)'.\n- 실험적인 대시보드의 스크랩 간격을 조정하여 스크랩 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 완화하기 위함) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '실험적인 대시보드의 스크랩 간격을 조정하여 스크랩 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 완화하기 위함)'.\n- 사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀 내에서 상황을 공유하고 신속한 대응을 위해) -> status=success, 실행시각=2025-11-12T08:38:30+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀 내에서 상황을 공유하고 신속한 대응을 위해)'.",
+    "created_at": "2025-11-12T08:38:30+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 트래픽 분산을 통해 CPU 사용량을 줄이고 서비스 가용성을 높이기 위함)",
+        "실험적인 대시보드의 스크랩 간격을 조정하여 스크랩 부하를 줄입니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 과부하를 완화하기 위함)",
+        "사고 채널에 알림을 보내어 가시성을 높입니다. (사유: 팀 내에서 상황을 공유하고 신속한 대응을 위해)"
+      ],
+      "created_at": "2025-11-12T08:38:30+00:00",
+      "doc_key": "action_execution:63acfed4-c8fb-4d5f-bf49-0bef4fc91552:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
+  },
+  {
+    "doc_key": "action_execution:215d2a65-c126-49d0-94d1-dd12cc3a08c8:executed",
+    "content": "승인된 조치 실행 기록 (Edge node CPU spike)\n시나리오 코드: cpu_spike_core\n결과 상태: executed\n실행 시각(UTC): 2025-11-12T08:38:31+00:00\nRecovery status: pending\n조치 목록:\n- Rebalance traffic by updating load balancer weights -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for 'Rebalance traffic by updating load balancer weights'.\n- Throttle scrape interval for experimental dashboard -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for 'Throttle scrape interval for experimental dashboard'.\n- Open Jira outage ticket for visibility -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for 'Open Jira outage ticket for visibility'.\n- Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요. -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for 'Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.'.\n- 트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함) -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)'.\n- 트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함) -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for '트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)'.\n- 실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함) -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for '실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)'.\n- 사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 대응할 수 있도록 하기 위함) -> status=success, 실행시각=2025-11-12T08:38:31+00:00, 비고=Simulated run completed for '사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 대응할 수 있도록 하기 위함)'.",
+    "created_at": "2025-11-12T08:38:31+00:00",
+    "title": "Edge node CPU spike 승인된 조치",
+    "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+    "scenario_code": "cpu_spike_core",
+    "status": "executed",
+    "type": "action_execution",
+    "metadata": {
+      "type": "action_execution",
+      "scenario_code": "cpu_spike_core",
+      "status": "executed",
+      "recovery_status": "recovered",
+      "title": "Edge node CPU spike 승인된 조치",
+      "summary": "승인된 조치: Rebalance traffic by updating load balancer weights, Throttle scrape interval for experimental dashboard, Open Jira outage ticket for visibility, Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+      "actions": [
+        "Rebalance traffic by updating load balancer weights",
+        "Throttle scrape interval for experimental dashboard",
+        "Open Jira outage ticket for visibility",
+        "Prometheus 대시보드에서 최근 배포와 메트릭 변화를 교차 확인하세요.",
+        "트래픽을 재조정하기 위해 로드 밸런서 가중치를 업데이트합니다. (사유: 집중 트래픽으로 인한 부하를 분산시키기 위함)",
+        "트래픽을 재조정하기 위해 로드 밸런서의 가중치를 업데이트합니다. (사유: 집중된 트래픽을 분산시켜 CPU 부하를 줄이기 위함)",
+        "실험용 대시보드의 스크랩 간격을 조정합니다. (사유: 잘못 구성된 스크랩 작업으로 인한 CPU 사용량 증가를 방지하기 위함)",
+        "사고 채널에 알림을 보내어 넓은 가시성을 확보합니다. (사유: 팀원들이 상황을 인지하고 대응할 수 있도록 하기 위함)"
+      ],
+      "created_at": "2025-11-12T08:38:31+00:00",
+      "doc_key": "action_execution:215d2a65-c126-49d0-94d1-dd12cc3a08c8:executed",
+      "recovered_at": "2025-11-12T08:38:42+00:00",
+      "recovery_metrics": {
+        "http": 0.0285,
+        "http_threshold": 0.05,
+        "cpu": 0.5038,
+        "cpu_threshold": 0.7
+      }
+    }
   }
 ]

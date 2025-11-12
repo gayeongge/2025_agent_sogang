@@ -19,6 +19,7 @@ from src.backend.state import (
     ActionExecution,
     ActionExecutionResult,
     IncidentReport,
+    RecoveryCheck,
 )
 from src.incident_console.utils import timestamp, utcnow_iso
 
@@ -159,12 +160,13 @@ class ActionExecutionService:
             execution.status = "executed"
             execution.executed_at = utcnow_iso()
             execution.results = results
+            self._track_recovery_watch_locked(execution)
             STATE.append_feed(
                 _feed_line(
                     f"Executed {len(results)} action(s) for {execution.scenario_title}"
                 )
             )
-        rag_service.record_action_execution(execution)
+        rag_service.record_action_execution(execution, recovery_status="pending")
         return execution
 
     def defer_execution(self, execution_id: str) -> ActionExecution:
@@ -175,12 +177,13 @@ class ActionExecutionService:
             execution.status = "deferred"
             execution.executed_at = None
             execution.results = []
+            self._clear_recovery_watch_locked(execution.id)
             STATE.append_feed(
                 _feed_line(
                     f"Stored action plan for manual review ({execution.scenario_title})"
                 )
             )
-        rag_service.record_action_deferred(execution)
+        rag_service.record_action_deferred(execution, recovery_status="not_executed")
         return execution
 
     def _require_execution(self, execution_id: str) -> ActionExecution:
@@ -192,3 +195,38 @@ class ActionExecutionService:
         if execution is None:
             raise ValueError("Unknown action execution request")
         return execution
+
+    def _track_recovery_watch_locked(self, execution: ActionExecution) -> None:
+        existing = next(
+            (check for check in STATE.recovery_checks if check.execution_id == execution.id),
+            None,
+        )
+        started_at = execution.executed_at or utcnow_iso()
+        if existing:
+            existing.status = "pending"
+            existing.started_at = started_at
+            existing.resolved_at = None
+            return
+
+        STATE.recovery_checks.append(
+            RecoveryCheck(
+                execution_id=execution.id,
+                scenario_code=execution.scenario_code,
+                scenario_title=execution.scenario_title,
+                started_at=started_at,
+            )
+        )
+        if len(STATE.recovery_checks) > 40:
+            STATE.recovery_checks.pop(0)
+        STATE.append_feed(
+            _feed_line(
+                f"Monitoring Prometheus recovery ({execution.scenario_title})"
+            )
+        )
+
+    def _clear_recovery_watch_locked(self, execution_id: str) -> None:
+        if not STATE.recovery_checks:
+            return
+        STATE.recovery_checks = [
+            check for check in STATE.recovery_checks if check.execution_id != execution_id
+        ]

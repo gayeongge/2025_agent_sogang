@@ -76,6 +76,9 @@ class PrometheusMonitor:
                 with STATE_LOCK:
                     STATE.incident_active = False
 
+            if not exceeded:
+                self._maybe_record_recovery(sample)
+
     def _handle_incident(self, sample: MetricSample) -> None:
         scenario = self._select_scenario(sample)
         if scenario is None:
@@ -185,4 +188,46 @@ class PrometheusMonitor:
     def _record_monitor_failure(self, message: str) -> None:
         with STATE_LOCK:
             STATE.append_feed(f"[{timestamp()}] {message}")
+
+    def _maybe_record_recovery(self, sample: MetricSample) -> None:
+        http_values = (sample.http, sample.http_threshold)
+        cpu_values = (sample.cpu, sample.cpu_threshold)
+        recovered: List[Tuple[str, str]] = []
+        with STATE_LOCK:
+            pending_checks = [
+                check for check in STATE.recovery_checks if check.status == "pending"
+            ]
+            if not pending_checks:
+                return
+
+            for check in pending_checks:
+                check.status = "recovered"
+                check.resolved_at = sample.timestamp
+                recovered.append((check.execution_id, check.resolved_at))
+                STATE.append_feed(
+                    "[{ts}] Prometheus metrics recovered for {title} "
+                    "(execution {exec}) http={http:.4f}/{http_thr:.4f}, "
+                    "cpu={cpu:.4f}/{cpu_thr:.4f}".format(
+                        ts=timestamp(),
+                        title=check.scenario_title,
+                        exec=check.execution_id[:8],
+                        http=http_values[0],
+                        http_thr=http_values[1],
+                        cpu=cpu_values[0],
+                        cpu_thr=cpu_values[1],
+                    )
+                )
+
+        for execution_id, resolved_at in recovered:
+            rag_service.mark_action_recovery(
+                execution_id,
+                "recovered",
+                resolved_at=resolved_at,
+                metrics={
+                    "http": http_values[0],
+                    "http_threshold": http_values[1],
+                    "cpu": cpu_values[0],
+                    "cpu_threshold": cpu_values[1],
+                },
+            )
 
