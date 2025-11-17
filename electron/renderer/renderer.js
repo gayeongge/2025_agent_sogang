@@ -20,6 +20,9 @@
     slackToken: $('#slackToken'),
     slackWorkspace: $('#slackWorkspace'),
     slackChannel: $('#slackChannel'),
+    slackChannelInput: $('#slackChannelInput'),
+    slackAddChannel: $('#slackAddChannel'),
+    slackRemoveChannel: $('#slackRemoveChannel'),
     slackTest: $('#slackTest'),
     slackSave: $('#slackSave'),
     promUrl: $('#promUrl'),
@@ -34,6 +37,9 @@
     ragUploadButton: $('#ragUploadButton'),
     ragStatus: $('#ragStatus'),
     ragTable: $('#ragTable'),
+    ragPageInfo: $('#ragPageInfo'),
+    ragPrevPage: $('#ragPrevPage'),
+    ragNextPage: $('#ragNextPage'),
     toast: $('#toast'),
     analysisContent: $('#analysisContent'),
     modal: $('#reportModal'),
@@ -82,6 +88,11 @@
     report: 'rag-pill--report',
     reference: 'rag-pill--reference',
   };
+  const RAG_PAGE_SIZE = 5;
+  const DEFAULT_SLACK_CHANNELS = ['#ops-incident', '#eng-incident', '#site-reliability'];
+  const STORAGE_KEYS = {
+    slackChannels: 'incident_console.slack_channels',
+  };
   const RECOVERY_STATUS_LABELS = {
     recovered: 'Recovered',
     pending: 'Pending',
@@ -100,6 +111,9 @@
   let activeTab = 'slack';
   let ragLoaded = false;
   let ragLoading = false;
+  let ragDocuments = [];
+  let ragPage = 1;
+  let customSlackChannels = [];
 
   const escapeHtml = (value) => {
     if (typeof value !== 'string') {
@@ -222,11 +236,7 @@
     try {
       const state = await request('/state');
       renderState(state);
-      if (activeTab === 'rag') {
-        await loadRagData({ force: true, silent: true });
-      } else {
-        ragLoaded = false;
-      }
+      await loadRagData({ force: true, silent: true });
     } catch (error) {
       if (!silent) {
         showToast(error.message || '상태를 불러오지 못했습니다.', 'error');
@@ -294,12 +304,141 @@
     }
   };
 
+  const normalizeSlackChannelName = (value) => {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    let channel = value.trim();
+    if (!channel) {
+      return '';
+    }
+    channel = channel.replace(/\s+/g, '-');
+    channel = channel.replace(/^#+/, '');
+    if (!channel) {
+      return '';
+    }
+    return channel.startsWith('#') ? channel : `#${channel}`;
+  };
+
+  const loadCustomSlackChannels = () => {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return [];
+    }
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEYS.slackChannels);
+      if (!raw) {
+        return [];
+      }
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed
+        .map((entry) => normalizeSlackChannelName(String(entry || '')))
+        .filter((entry, index, arr) => entry && arr.indexOf(entry) === index);
+    } catch {
+      return [];
+    }
+  };
+
+  const persistCustomSlackChannels = () => {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return;
+    }
+    window.localStorage.setItem(
+      STORAGE_KEYS.slackChannels,
+      JSON.stringify(customSlackChannels),
+    );
+  };
+
+  let slackChannelsInitialized = false;
+
+  const ensureSlackChannelsLoaded = () => {
+    if (slackChannelsInitialized) {
+      return;
+    }
+    customSlackChannels = loadCustomSlackChannels();
+    slackChannelsInitialized = true;
+  };
+
+  const getAllSlackChannels = () => {
+    ensureSlackChannelsLoaded();
+    const seen = new Set();
+    const ordered = [];
+    const register = (value) => {
+      const normalized = normalizeSlackChannelName(value);
+      if (!normalized || seen.has(normalized)) {
+        return;
+      }
+      seen.add(normalized);
+      ordered.push(normalized);
+    };
+    DEFAULT_SLACK_CHANNELS.forEach(register);
+    customSlackChannels.forEach(register);
+    return ordered;
+  };
+
+  const updateSlackRemoveButtonState = () => {
+    ensureSlackChannelsLoaded();
+    const button = elements.slackRemoveChannel;
+    const select = elements.slackChannel;
+    if (!button || !select) {
+      return;
+    }
+    const channel = normalizeSlackChannelName(select.value);
+    const removable =
+      Boolean(channel) && customSlackChannels.includes(channel);
+    if (removable) {
+      button.removeAttribute('disabled');
+      button.dataset.channel = channel;
+    } else {
+      button.setAttribute('disabled', 'disabled');
+      delete button.dataset.channel;
+    }
+  };
+
+  const rebuildSlackChannelOptions = (preferredChannel) => {
+    const select = elements.slackChannel;
+    if (!select) {
+      return;
+    }
+    const channels = getAllSlackChannels();
+    const currentValue = select.value;
+    const desiredValue =
+      select.dataset.dirty === 'true'
+        ? currentValue
+        : normalizeSlackChannelName(preferredChannel) ||
+          normalizeSlackChannelName(currentValue) ||
+          channels[0] ||
+          DEFAULT_SLACK_CHANNELS[0];
+
+    if (desiredValue && !channels.includes(desiredValue)) {
+      channels.push(desiredValue);
+    }
+
+    select.innerHTML = '';
+    channels.forEach((channel) => {
+      const option = document.createElement('option');
+      option.value = channel;
+      option.textContent = channel;
+      select.appendChild(option);
+    });
+
+    if (select.dataset.dirty === 'true' && currentValue && channels.includes(currentValue)) {
+      select.value = currentValue;
+    } else if (desiredValue && channels.includes(desiredValue)) {
+      select.value = desiredValue;
+      delete select.dataset.dirty;
+    } else if (!select.value && channels.length) {
+      select.value = channels[0];
+    }
+    updateSlackRemoveButtonState();
+  };
+
   const renderSlack = (settings = {}) => {
     updateInputValue(elements.slackToken, settings.token || '');
     updateInputValue(elements.slackWorkspace, settings.workspace || '');
-    if (elements.slackChannel) {
-      updateInputValue(elements.slackChannel, settings.channel || '#ops-incident');
-    }
+    rebuildSlackChannelOptions(settings.channel || '#ops-incident');
   };
 
   const renderPrometheus = (settings = {}) => {
@@ -606,7 +745,45 @@
     });
   };
 
-  const renderRagDocuments = (documents = []) => {
+  const getRagTotalPages = () => {
+    if (!ragDocuments.length) {
+      return 1;
+    }
+    return Math.ceil(ragDocuments.length / RAG_PAGE_SIZE);
+  };
+
+  const updateRagPaginationControls = () => {
+    const info = elements.ragPageInfo;
+    const prev = elements.ragPrevPage;
+    const next = elements.ragNextPage;
+    const totalRecords = ragDocuments.length;
+    const hasRecords = totalRecords > 0;
+    const totalPages = hasRecords ? getRagTotalPages() : 1;
+    const currentPage = hasRecords ? ragPage : 1;
+
+    if (info) {
+      info.textContent = hasRecords ? `Page ${currentPage} / ${totalPages}` : 'No records';
+    }
+    if (prev) {
+      if (!hasRecords || currentPage <= 1) {
+        prev.setAttribute('disabled', 'disabled');
+      } else {
+        prev.removeAttribute('disabled');
+      }
+    }
+    if (next) {
+      if (!hasRecords || currentPage >= totalPages) {
+        next.setAttribute('disabled', 'disabled');
+      } else {
+        next.removeAttribute('disabled');
+      }
+    }
+  };
+
+  const renderRagDocuments = (documents) => {
+    if (Array.isArray(documents)) {
+      ragDocuments = documents;
+    }
     const statusEl = elements.ragStatus;
     const table = elements.ragTable;
     if (!statusEl || !table) {
@@ -617,13 +794,26 @@
       return;
     }
     body.innerHTML = '';
-    if (!Array.isArray(documents) || !documents.length) {
+    if (!ragDocuments.length) {
       statusEl.textContent = 'No RAG records found.';
       table.classList.add('hidden');
+      updateRagPaginationControls();
       return;
     }
-    statusEl.textContent = `${documents.length} RAG record(s) available.`;
-    documents.forEach((doc) => {
+    const totalPages = getRagTotalPages();
+    if (ragPage > totalPages) {
+      ragPage = totalPages;
+    }
+    if (ragPage < 1) {
+      ragPage = 1;
+    }
+    const startIndex = (ragPage - 1) * RAG_PAGE_SIZE;
+    const pageDocuments = ragDocuments.slice(
+      startIndex,
+      startIndex + RAG_PAGE_SIZE,
+    );
+    statusEl.textContent = `${ragDocuments.length} RAG record(s) available.`;
+    pageDocuments.forEach((doc) => {
       if (!doc) {
         return;
       }
@@ -689,9 +879,23 @@
       body.appendChild(row);
     });
     table.classList.remove('hidden');
+    updateRagPaginationControls();
   };
 
-  const loadRagData = async ({ force = false, silent = false } = {}) => {
+  const goToRagPage = (targetPage) => {
+    if (!ragDocuments.length) {
+      return;
+    }
+    const totalPages = getRagTotalPages();
+    const nextPage = Math.min(Math.max(targetPage, 1), totalPages);
+    if (nextPage === ragPage) {
+      return;
+    }
+    ragPage = nextPage;
+    renderRagDocuments();
+  };
+
+  const loadRagData = async ({ force = false, silent = false, resetPage = false } = {}) => {
     if (!elements.ragTable) {
       return;
     }
@@ -710,6 +914,9 @@
         : docsSource
         ? Object.values(docsSource)
         : [];
+      if (resetPage) {
+        ragPage = 1;
+      }
       renderRagDocuments(documents);
       ragLoaded = true;
     } catch (error) {
@@ -769,7 +976,7 @@
       showToast(message, 'success');
       resetRagUploadInput();
       ragLoaded = false;
-      await loadRagData({ force: true, silent: true });
+      await loadRagData({ force: true, silent: true, resetPage: true });
     } catch (error) {
       showToast(error.message || 'Failed to upload RAG document.', 'error');
     } finally {
@@ -1002,7 +1209,10 @@
   const getSlackPayload = () => ({
     token: elements.slackToken ? elements.slackToken.value.trim() : '',
     workspace: elements.slackWorkspace ? elements.slackWorkspace.value.trim() : '',
-    channel: elements.slackChannel ? elements.slackChannel.value.trim() || '#ops-incident' : '#ops-incident',
+    channel:
+      normalizeSlackChannelName(
+        elements.slackChannel ? elements.slackChannel.value : '',
+      ) || '#ops-incident',
   });
 
   const getPrometheusPayload = () => ({
@@ -1080,6 +1290,76 @@
     } finally {
       setBusy(elements.slackTest, false);
     }
+  };
+
+  
+  const handleSlackAddChannel = () => {
+    const input = elements.slackChannelInput;
+    const select = elements.slackChannel;
+    if (!input || !select) {
+      return;
+    }
+    const channel = normalizeSlackChannelName(input.value);
+    if (!channel) {
+      showToast('Please enter a Slack channel name to add.', 'error');
+      return;
+    }
+    ensureSlackChannelsLoaded();
+    if (
+      DEFAULT_SLACK_CHANNELS.includes(channel) ||
+      customSlackChannels.includes(channel)
+    ) {
+      rebuildSlackChannelOptions(channel);
+      select.dataset.dirty = 'true';
+      select.value = channel;
+      showToast(`${channel} selected. Click Save to persist the change.`);
+      input.value = '';
+      return;
+    }
+    customSlackChannels.push(channel);
+    customSlackChannels = customSlackChannels.filter(
+      (value, index, arr) => arr.indexOf(value) === index,
+    );
+    persistCustomSlackChannels();
+    rebuildSlackChannelOptions(channel);
+    select.dataset.dirty = 'true';
+    select.value = channel;
+    input.value = '';
+    updateSlackRemoveButtonState();
+    showToast(`${channel} added. Click Save to apply the new default channel.`, 'success');
+  };
+
+  const handleSlackRemoveChannel = () => {
+    const select = elements.slackChannel;
+    if (!select) {
+      return;
+    }
+    const channel = normalizeSlackChannelName(select.value);
+    if (!channel) {
+      showToast('삭제할 채널을 먼저 선택해 주세요.', 'error');
+      return;
+    }
+    ensureSlackChannelsLoaded();
+    if (!customSlackChannels.includes(channel)) {
+      showToast('기본 채널은 삭제할 수 없습니다.', 'error');
+      return;
+    }
+    customSlackChannels = customSlackChannels.filter(
+      (value) => value !== channel,
+    );
+    persistCustomSlackChannels();
+    const fallback =
+      customSlackChannels[customSlackChannels.length - 1] ||
+      DEFAULT_SLACK_CHANNELS[0];
+    const preferred = normalizeSlackChannelName(fallback);
+    delete select.dataset.dirty;
+    rebuildSlackChannelOptions(preferred || DEFAULT_SLACK_CHANNELS[0]);
+    select.dataset.dirty = 'true';
+    if (preferred) {
+      select.value = preferred;
+    }
+    updateSlackRemoveButtonState();
+    showToast(`${channel} 채널을 삭제했습니다. 저장을 눌러 적용해 주세요.`, 'info');
   };
 
   const handleSlackSave = async () => {
@@ -1191,9 +1471,6 @@
     tabPanels.forEach((panel) => {
       panel.classList.toggle('active', panel.id === `tab-${activeTab}`);
     });
-    if (activeTab === 'rag') {
-      loadRagData();
-    }
   };
 
   const bindEvents = () => {
@@ -1208,7 +1485,19 @@
 
     if (elements.ragRefresh) {
       elements.ragRefresh.addEventListener('click', () => {
-        loadRagData({ force: true });
+        loadRagData({ force: true, resetPage: true });
+      });
+    }
+
+    if (elements.ragPrevPage) {
+      elements.ragPrevPage.addEventListener('click', () => {
+        goToRagPage(ragPage - 1);
+      });
+    }
+
+    if (elements.ragNextPage) {
+      elements.ragNextPage.addEventListener('click', () => {
+        goToRagPage(ragPage + 1);
       });
     }
 
@@ -1218,6 +1507,26 @@
 
     if (elements.ragUploadButton) {
       elements.ragUploadButton.addEventListener('click', handleRagUpload);
+    }
+
+    if (elements.slackChannel) {
+      elements.slackChannel.addEventListener('change', () => {
+        updateSlackRemoveButtonState();
+      });
+    }
+    if (elements.slackAddChannel) {
+      elements.slackAddChannel.addEventListener('click', handleSlackAddChannel);
+    }
+    if (elements.slackRemoveChannel) {
+      elements.slackRemoveChannel.addEventListener('click', handleSlackRemoveChannel);
+    }
+    if (elements.slackChannelInput) {
+      elements.slackChannelInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleSlackAddChannel();
+        }
+      });
     }
 
     if (elements.verifyButton) {
@@ -1284,6 +1593,8 @@
     }
 
     updateRagUploadState();
+    updateRagPaginationControls();
+    updateSlackRemoveButtonState();
   };
 
   document.addEventListener('DOMContentLoaded', () => {

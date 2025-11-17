@@ -55,6 +55,46 @@
           </div>
           <div id="systemFeed" class="feed"></div>
         </section>
+
+        <section class="card rag-card">
+          <div class="rag-header">
+            <h2>RAG Data</h2>
+            <div class="rag-controls">
+              <button type="button" id="ragRefresh" class="ghost small">Refresh</button>
+            </div>
+          </div>
+          <div class="rag-upload">
+            <label class="rag-upload__picker" for="ragFileInput">
+              <span>Upload RAG document (.json or .txt)</span>
+              <input type="file" id="ragFileInput" accept=".json,.txt" />
+            </label>
+            <div class="rag-upload__actions">
+              <p class="rag-upload__hint">Only UTF-8 encoded json/txt files are accepted.</p>
+              <button type="button" id="ragUploadButton" class="primary small" disabled>Upload</button>
+            </div>
+          </div>
+          <p id="ragStatus" class="rag-status">No RAG records yet.</p>
+          <table id="ragTable" class="rag-table hidden">
+            <thead>
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Scenario</th>
+                <th scope="col">Status</th>
+                <th scope="col">Recovery</th>
+                <th scope="col">Recorded</th>
+                <th scope="col">Summary</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="rag-pagination">
+            <span id="ragPageInfo" class="rag-pagination__info">No records</span>
+            <div class="rag-pagination__controls">
+              <button type="button" id="ragPrevPage" class="ghost small" disabled>Prev</button>
+              <button type="button" id="ragNextPage" class="ghost small" disabled>Next</button>
+            </div>
+          </div>
+        </section>
       </main>
 
       <aside class="side-pane">
@@ -71,7 +111,6 @@
           <button class="tab active" data-tab="slack" role="tab">Slack</button>
           <button class="tab" data-tab="prometheus" role="tab">Prometheus</button>
           <button class="tab" data-tab="actions" role="tab">조치 결과</button>
-          <button class="tab" data-tab="rag" role="tab">RAG Data</button>
         </nav>
 
         <section class="tab-content active" id="tab-slack" role="tabpanel">
@@ -79,13 +118,24 @@
           <form id="slackForm" class="form-grid">
             <label>Bot Token<input type="password" id="slackToken" autocomplete="off" required /></label>
             <label>Workspace<input type="text" id="slackWorkspace" placeholder="example.slack.com" /></label>
-            <label>Default Channel
-              <select id="slackChannel">
-                <option value="#ops-incident">#ops-incident</option>
-                <option value="#eng-incident">#eng-incident</option>
-                <option value="#site-reliability">#site-reliability</option>
-              </select>
-            </label>
+            <div class="channel-field">
+              <label for="slackChannel">Default Channel</label>
+              <div class="channel-field__controls">
+                <select id="slackChannel">
+                  <option value="#ops-incident">#ops-incident</option>
+                  <option value="#eng-incident">#eng-incident</option>
+                  <option value="#site-reliability">#site-reliability</option>
+                </select>
+                <input
+                  type="text"
+                  id="slackChannelInput"
+                  placeholder="#custom-channel"
+                  aria-label="Add custom Slack channel"
+                />
+                <button type="button" id="slackAddChannel" class="ghost small">Add</button>
+                <button type="button" id="slackRemoveChannel" class="ghost small danger" disabled>Remove</button>
+              </div>
+            </div>
             <div class="button-row">
               <button type="button" id="slackTest" class="ghost">Test</button>
               <button type="button" id="slackSave" class="primary">Save</button>
@@ -115,36 +165,6 @@
           </div>
         </section>
 
-        <section class="tab-content" id="tab-rag" role="tabpanel">
-          <div class="rag-header">
-            <h2>RAG Data</h2>
-            <button type="button" id="ragRefresh" class="ghost small">Refresh</button>
-          </div>
-          <div class="rag-upload">
-            <label class="rag-upload__picker" for="ragFileInput">
-              <span>Upload RAG document (.json or .txt)</span>
-              <input type="file" id="ragFileInput" accept=".json,.txt" />
-            </label>
-            <div class="rag-upload__actions">
-              <p class="rag-upload__hint">Only UTF-8 encoded json/txt files are accepted.</p>
-              <button type="button" id="ragUploadButton" class="primary small" disabled>Upload</button>
-            </div>
-          </div>
-          <p id="ragStatus" class="rag-status">No RAG records yet.</p>
-          <table id="ragTable" class="rag-table hidden">
-            <thead>
-              <tr>
-                <th scope="col">Title</th>
-                <th scope="col">Scenario</th>
-                <th scope="col">Status</th>
-                <th scope="col">Recovery</th>
-                <th scope="col">Recorded</th>
-                <th scope="col">Summary</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </section>
       </aside>
     </div>
 
