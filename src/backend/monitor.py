@@ -107,8 +107,6 @@ class PrometheusMonitor:
         report.recipients_sent = recipients_sent
         report.recipients_missing = recipients_missing
 
-        rag_service.record_incident_report(report)
-
         feed_message = self._build_feed_message(sample, recipients_sent, recipients_missing)
         self._alert_service.record_incident(scenario, report, feed_message)
 
