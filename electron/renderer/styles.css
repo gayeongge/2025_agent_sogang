@@ -642,6 +642,50 @@ button.small {
   margin-bottom: 12px;
 }
 
+.rag-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.rag-upload__picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  background: rgba(99, 102, 241, 0.04);
+  cursor: pointer;
+}
+
+.rag-upload__picker:hover {
+  border-color: var(--accent-strong);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.rag-upload__picker input {
+  display: none;
+}
+
+.rag-upload__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rag-upload__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .rag-status {
   margin: 0 0 12px;
   font-size: 13px;

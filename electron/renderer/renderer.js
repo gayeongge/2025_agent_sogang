@@ -30,6 +30,8 @@
     promTest: $('#promTest'),
     promSave: $('#promSave'),
     ragRefresh: $('#ragRefresh'),
+    ragFileInput: $('#ragFileInput'),
+    ragUploadButton: $('#ragUploadButton'),
     ragStatus: $('#ragStatus'),
     ragTable: $('#ragTable'),
     toast: $('#toast'),
@@ -173,9 +175,14 @@
     const { method = 'GET', body, headers } = options;
     const init = { method, headers: { ...(headers || {}) } };
     if (body !== undefined) {
-      init.body = typeof body === 'string' ? body : JSON.stringify(body);
-      if (!init.headers['Content-Type']) {
-        init.headers['Content-Type'] = 'application/json';
+      const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+      if (isFormData) {
+        init.body = body;
+      } else {
+        init.body = typeof body === 'string' ? body : JSON.stringify(body);
+        if (!init.headers['Content-Type']) {
+          init.headers['Content-Type'] = 'application/json';
+        }
       }
     }
     let response;
@@ -714,6 +721,62 @@
     }
   };
 
+  const getSelectedRagFile = () => {
+    const input = elements.ragFileInput;
+    if (!input || !input.files || !input.files.length) {
+      return null;
+    }
+    return input.files[0];
+  };
+
+  const resetRagUploadInput = () => {
+    if (elements.ragFileInput) {
+      elements.ragFileInput.value = '';
+    }
+  };
+
+  const updateRagUploadState = () => {
+    const button = elements.ragUploadButton;
+    if (!button || button.dataset.loading === 'true') {
+      return;
+    }
+    const hasFile = Boolean(getSelectedRagFile());
+    if (hasFile) {
+      button.removeAttribute('disabled');
+    } else {
+      button.setAttribute('disabled', 'disabled');
+    }
+  };
+
+  const handleRagUpload = async () => {
+    const button = elements.ragUploadButton;
+    const file = getSelectedRagFile();
+    if (!button || !file) {
+      showToast('먼저 JSON 또는 TXT 문서를 선택해 주세요.', 'error');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    setBusy(button, true);
+    try {
+      const response = await request('/rag/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const message =
+        (response && response.message) ||
+        `${file.name} uploaded as RAG reference.`;
+      showToast(message, 'success');
+      resetRagUploadInput();
+      ragLoaded = false;
+      await loadRagData({ force: true, silent: true });
+    } catch (error) {
+      showToast(error.message || 'Failed to upload RAG document.', 'error');
+    } finally {
+      setBusy(button, false);
+      updateRagUploadState();
+    }
+  };
 
   const showActionModal = (execution) => {
     const modal = elements.actionModal;
@@ -1149,6 +1212,14 @@
       });
     }
 
+    if (elements.ragFileInput) {
+      elements.ragFileInput.addEventListener('change', updateRagUploadState);
+    }
+
+    if (elements.ragUploadButton) {
+      elements.ragUploadButton.addEventListener('click', handleRagUpload);
+    }
+
     if (elements.verifyButton) {
       elements.verifyButton.addEventListener('click', handleVerify);
     }
@@ -1211,6 +1282,8 @@
     if (elements.actionModalLater) {
       elements.actionModalLater.addEventListener('click', handleActionLater);
     }
+
+    updateRagUploadState();
   };
 
   document.addEventListener('DOMContentLoaded', () => {

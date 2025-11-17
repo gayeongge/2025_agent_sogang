@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 from threading import Lock
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional
+from uuid import uuid4
 
 from src.incident_console.config import get_openai_api_key
 from src.incident_console.models import AlertScenario
@@ -220,7 +221,16 @@ class RAGService:
                 self._save_vectorstore()
             except Exception:  # pragma: no cover - index append guard
                 logger.exception("Failed to append document %s to FAISS index.", doc_key)
-            return True
+        return True
+
+    @staticmethod
+    def _summarize_plain_text(text: str, max_length: int = 200) -> str:
+        squashed = " ".join(text.split())
+        if not squashed:
+            return "Uploaded RAG reference"
+        if len(squashed) <= max_length:
+            return squashed
+        return f"{squashed[: max_length - 3]}..."
 
     # ------------------------------------------------------------------ #
     # Public API
@@ -252,6 +262,35 @@ class RAGService:
                     "summary": summary or scenario.description,
                 },
             )
+
+    def add_uploaded_document(
+        self,
+        *,
+        title: str,
+        content: str,
+        metadata: Optional[Dict[str, object]] = None,
+    ) -> str:
+        clean_metadata: Dict[str, object] = {}
+        if metadata:
+            clean_metadata.update(metadata)
+
+        normalized_title = title.strip() or "Uploaded RAG reference"
+        clean_metadata.setdefault("title", normalized_title)
+
+        summary = clean_metadata.get("summary")
+        if not isinstance(summary, str) or not summary.strip():
+            clean_metadata["summary"] = self._summarize_plain_text(content)
+
+        clean_metadata.setdefault("status", "reference")
+        clean_metadata.setdefault("type", "uploaded")
+        clean_metadata.setdefault("scenario_code", "")
+        clean_metadata.setdefault("recovery_status", "unknown")
+
+        doc_key = f"upload:{uuid4().hex}"
+        added = self._add_document(doc_key=doc_key, content=content, metadata=clean_metadata)
+        if not added:  # pragma: no cover - duplicate guard
+            raise ValueError("Document already exists.")
+        return doc_key
 
     def record_action_execution(
         self,

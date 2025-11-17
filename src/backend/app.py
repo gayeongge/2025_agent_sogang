@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+import json
+from pathlib import Path
+
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.backend.actions import ActionExecutionService
 from src.backend.fake_actions_api import fake_actions_app
 from src.backend.monitor import PrometheusMonitor
-from src.backend.rag import rag_service
+from src.backend.rag import RAGService, rag_service
 from src.backend.services import (
     AlertService,
     PrometheusService,
@@ -61,6 +64,9 @@ class NotificationPreferencePayload(BaseModel):
     slack: bool = True
 
 
+ALLOWED_RAG_UPLOAD_SUFFIXES = {".json", ".txt"}
+
+
 app = FastAPI(title="Incident Response Console Backend", version="0.2.0")
 app.mount("/action-simulator", fake_actions_app)
 
@@ -80,6 +86,117 @@ def _handle_errors(fn):
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _parse_uploaded_json_documents(payload: object) -> list[dict[str, object]]:
+    if isinstance(payload, list):
+        documents = payload
+    elif isinstance(payload, dict):
+        doc_list = payload.get("documents")
+        if isinstance(doc_list, list):
+            documents = doc_list
+        else:
+            documents = [payload]
+    else:
+        raise ValueError("Uploaded JSON must be an object or an array of objects.")
+
+    normalized: list[dict[str, object]] = []
+    for entry in documents:
+        if not isinstance(entry, dict):
+            raise ValueError("Uploaded JSON documents must contain objects.")
+        normalized.append(entry)
+
+    if not normalized:
+        raise ValueError("Uploaded JSON file does not contain any documents.")
+    return normalized
+
+
+def _normalize_uploaded_entry(
+    entry: dict[str, object],
+    *,
+    fallback_title: str,
+    filename: str,
+) -> dict[str, object]:
+    metadata: dict[str, object] = {}
+    entry_metadata = entry.get("metadata")
+    if isinstance(entry_metadata, dict):
+        metadata.update(entry_metadata)
+
+    for key in (
+        "title",
+        "summary",
+        "scenario_code",
+        "status",
+        "type",
+        "recovery_status",
+        "actions",
+        "created_at",
+    ):
+        value = entry.get(key)
+        if value is not None and key not in metadata:
+            metadata[key] = value
+
+    metadata["source_filename"] = filename
+    title_value = metadata.get("title")
+    if not isinstance(title_value, str) or not title_value.strip():
+        metadata["title"] = fallback_title or "Uploaded RAG reference"
+
+    content: str | None = None
+    for field in ("content", "text", "body"):
+        candidate = entry.get(field)
+        if isinstance(candidate, str) and candidate.strip():
+            content = candidate
+            break
+
+    if not content:
+        raise ValueError("JSON document must include a 'content' or 'text' field.")
+
+    return {
+        "title": metadata["title"],
+        "content": content,
+        "metadata": metadata,
+    }
+
+
+def _ingest_rag_upload(
+    filename: str,
+    suffix: str,
+    text: str,
+    *,
+    service: RAGService | None = None,
+) -> list[str]:
+    target = service or rag_service
+    base_title = Path(filename).stem or "Uploaded RAG reference"
+    if suffix == ".txt":
+        if not text.strip():
+            raise ValueError("Uploaded document is empty.")
+        doc_key = target.add_uploaded_document(
+            title=base_title,
+            content=text,
+            metadata={"source_filename": filename},
+        )
+        return [doc_key]
+
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError("Uploaded JSON file is not valid.") from exc
+
+    documents = _parse_uploaded_json_documents(payload)
+    doc_keys: list[str] = []
+    for entry in documents:
+        normalized = _normalize_uploaded_entry(
+            entry,
+            fallback_title=base_title,
+            filename=filename,
+        )
+        doc_key = target.add_uploaded_document(
+            title=normalized["title"],
+            content=normalized["content"],
+            metadata=normalized["metadata"],
+        )
+        doc_keys.append(doc_key)
+    return doc_keys
 
 
 @app.on_event("startup")
@@ -105,6 +222,33 @@ def get_state() -> dict[str, object]:
 @app.get("/rag/documents")
 def get_rag_documents() -> dict[str, object]:
     return {"documents": rag_service.list_documents()}
+
+
+@app.post("/rag/upload")
+async def upload_rag_document(file: UploadFile = File(...)) -> dict[str, object]:
+    filename = file.filename or "upload"
+    suffix = Path(filename).suffix.lower()
+    if suffix not in ALLOWED_RAG_UPLOAD_SUFFIXES:
+        raise HTTPException(status_code=400, detail="Only .json or .txt files are supported.")
+
+    raw_bytes = await file.read()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    try:
+        decoded = raw_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Uploaded file must be UTF-8 encoded.") from exc
+
+    try:
+        doc_keys = _ingest_rag_upload(filename, suffix, decoded)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "message": f"Uploaded {len(doc_keys)} RAG document(s).",
+        "documents": doc_keys,
+    }
 
 
 @app.post("/alerts/trigger")

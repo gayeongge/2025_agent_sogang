@@ -120,6 +120,16 @@
             <h2>RAG Data</h2>
             <button type="button" id="ragRefresh" class="ghost small">Refresh</button>
           </div>
+          <div class="rag-upload">
+            <label class="rag-upload__picker" for="ragFileInput">
+              <span>Upload RAG document (.json or .txt)</span>
+              <input type="file" id="ragFileInput" accept=".json,.txt" />
+            </label>
+            <div class="rag-upload__actions">
+              <p class="rag-upload__hint">Only UTF-8 encoded json/txt files are accepted.</p>
+              <button type="button" id="ragUploadButton" class="primary small" disabled>Upload</button>
+            </div>
+          </div>
           <p id="ragStatus" class="rag-status">No RAG records yet.</p>
           <table id="ragTable" class="rag-table hidden">
             <thead>
