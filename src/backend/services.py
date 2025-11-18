@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import asdict
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from src.backend.state import (
     STATE,
@@ -15,9 +15,11 @@ from src.backend.state import (
     MetricSample,
     make_sample,
 )
+from src.incident_console.config import set_openai_api_key
 from src.incident_console.integrations.prometheus import PrometheusClient
 from src.incident_console.integrations.slack import SlackIntegration
 from src.incident_console.models import (
+    AISettings,
     AlertScenario,
     PrometheusSettings,
     SlackSettings,
@@ -46,11 +48,14 @@ class SlackService:
         report_body: Optional[str] = None,
     ) -> Dict[str, object]:
         with STATE_LOCK:
+            preferences_enabled = STATE.preferences.slack
             settings = STATE.slack
             token = settings.token
             workspace = settings.workspace or "workspace"
             channel_to_use = channel or settings.channel or "#ops-incident"
 
+        if not preferences_enabled:
+            raise ValueError("Slack auto notifications are disabled. Enable the checkbox to send messages.")
         if not token:
             raise ValueError("Slack token is not configured")
 
@@ -193,12 +198,16 @@ class AlertService:
             state_copy = {
                 "slack": asdict(STATE.slack),
                 "prometheus": asdict(STATE.prometheus),
+                "ai": {
+                    "configured": bool(STATE.ai.api_key),
+                },
                 "feed": list(STATE.feed),
                 "alert_history": list(STATE.alert_history),
                 "last_alert": serialize_scenario(STATE.last_alert) if STATE.last_alert else None,
                 "monitor": {
                     "samples": [serialize_sample(sample) for sample in STATE.monitor_samples],
-                    "incident_active": STATE.incident_active,
+                    "incident_active": bool(STATE.active_incidents),
+                    "active_incidents": sorted(STATE.active_incidents),
                 },
                 "preferences": asdict(STATE.preferences),
                 "last_report": serialize_report(STATE.last_report),
@@ -217,6 +226,26 @@ class AlertService:
             if STATE.last_alert is None:
                 raise ValueError("No alert has been triggered yet")
             return STATE.last_alert
+
+
+class AIService:
+    def __init__(self, *, on_change: Optional[Callable[[], None]] = None) -> None:
+        self._on_change = on_change
+
+    def save(self, settings: AISettings) -> str:
+        updated_value = (settings.api_key or "").strip()
+        with STATE_LOCK:
+            STATE.ai.api_key = updated_value
+            message = (
+                "OpenAI API key configured."
+                if updated_value
+                else "OpenAI API key cleared."
+            )
+            STATE.append_feed(_feed_line(message))
+        set_openai_api_key(updated_value)
+        if self._on_change:
+            self._on_change()
+        return message
 
 
 def serialize_scenario(scenario: Optional[AlertScenario]) -> Optional[Dict[str, object]]:

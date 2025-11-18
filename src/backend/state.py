@@ -5,9 +5,11 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 from threading import Lock
-from typing import Deque, List, Optional
+from typing import Deque, List, Optional, Set
 
+from src.incident_console.config import get_openai_api_key
 from src.incident_console.models import (
+    AISettings,
     AlertScenario,
     PrometheusSettings,
     SlackSettings,
@@ -106,6 +108,9 @@ class AppState:
 
     slack: SlackSettings = field(default_factory=SlackSettings)
     prometheus: PrometheusSettings = field(default_factory=PrometheusSettings)
+    ai: AISettings = field(
+        default_factory=lambda: AISettings(api_key=get_openai_api_key() or "")
+    )
     scenarios: List[AlertScenario] = field(default_factory=load_default_scenarios)
     feed: List[str] = field(default_factory=list)
     alert_history: List[str] = field(default_factory=list)
@@ -113,7 +118,7 @@ class AppState:
     monitor_samples: Deque[MetricSample] = field(
         default_factory=lambda: deque(maxlen=5)
     )
-    incident_active: bool = False
+    active_incidents: Set[str] = field(default_factory=set)
     preferences: NotificationPreferences = field(
         default_factory=NotificationPreferences
     )

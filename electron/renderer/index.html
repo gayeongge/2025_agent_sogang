@@ -110,6 +110,7 @@
         <nav class="tab-bar" role="tablist">
           <button class="tab active" data-tab="slack" role="tab">Slack</button>
           <button class="tab" data-tab="prometheus" role="tab">Prometheus</button>
+          <button class="tab" data-tab="ai" role="tab">AI</button>
           <button class="tab" data-tab="actions" role="tab">조치 결과</button>
         </nav>
 
@@ -154,6 +155,21 @@
             <div class="button-row">
               <button type="button" id="promTest" class="ghost">Test</button>
               <button type="button" id="promSave" class="primary">Save</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="tab-content" id="tab-ai" role="tabpanel">
+          <h2>AI Settings</h2>
+          <form id="aiForm" class="form-grid">
+            <p class="ai-hint">
+              OpenAI API Key를 입력하면 Incident AI 분석과 RAG 기능에 즉시 반영됩니다.
+              입력하지 않으면 .env 값이 사용됩니다.
+            </p>
+            <label>OpenAI API Key<input type="password" id="aiApiKey" placeholder="sk-..." autocomplete="off" /></label>
+            <p id="aiStatus" class="ai-status" data-configured="false">API Key가 아직 설정되지 않았습니다.</p>
+            <div class="button-row">
+              <button type="button" id="aiSave" class="primary">Save</button>
             </div>
           </form>
         </section>

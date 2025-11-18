@@ -355,6 +355,33 @@ button.wide {
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
+.ai-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.ai-status {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--divider);
+  background: #f3f8ff;
+  color: #1a3c6e;
+  font-size: 13px;
+}
+
+.ai-status[data-configured='true'] {
+  background: #edfbee;
+  color: #0f5132;
+}
+
+.ai-status[data-configured='false'] {
+  background: #fff4f0;
+  color: #a94424;
+}
+
 .button-row {
   display: flex;
   gap: 12px;

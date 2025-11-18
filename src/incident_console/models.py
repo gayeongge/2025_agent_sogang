@@ -29,3 +29,8 @@ class PrometheusSettings:
     http_threshold: str = "0.05"
     cpu_query: str = ""
     cpu_threshold: str = "0.80"
+
+
+@dataclass
+class AISettings:
+    api_key: str = ""

@@ -14,6 +14,7 @@ from src.backend.fake_actions_api import fake_actions_app
 from src.backend.monitor import PrometheusMonitor
 from src.backend.rag import RAGService, rag_service
 from src.backend.services import (
+    AIService,
     AlertService,
     PrometheusService,
     SlackService,
@@ -21,7 +22,7 @@ from src.backend.services import (
 )
 from src.backend.state import STATE, STATE_LOCK
 from src.incident_console.errors import IntegrationError
-from src.incident_console.models import PrometheusSettings, SlackSettings
+from src.incident_console.models import AISettings, PrometheusSettings, SlackSettings
 
 slack_service = SlackService()
 prom_service = PrometheusService()
@@ -34,6 +35,7 @@ monitor = PrometheusMonitor(
     action_service,
 )
 rag_service.bootstrap_scenarios(STATE.scenarios)
+ai_service = AIService(on_change=rag_service.reset_embeddings)
 
 
 class SlackSettingsPayload(BaseModel):
@@ -62,6 +64,10 @@ class PrometheusTestPayload(BaseModel):
 
 class NotificationPreferencePayload(BaseModel):
     slack: bool = True
+
+
+class AISettingsPayload(BaseModel):
+    api_key: str = Field("", description="OpenAI API key used for analysis/RAG")
 
 
 ALLOWED_RAG_UPLOAD_SUFFIXES = {".json", ".txt"}
@@ -307,6 +313,13 @@ def prometheus_save(payload: PrometheusSettingsPayload) -> dict[str, str]:
         cpu_threshold=payload.cpu_threshold.strip() or "0.80",
     )
     message = _handle_errors(lambda: prom_service.save(settings))
+    return {"message": message}
+
+
+@app.post("/ai/save")
+def ai_save(payload: AISettingsPayload) -> dict[str, str]:
+    settings = AISettings(api_key=payload.api_key)
+    message = ai_service.save(settings)
     return {"message": message}
 
 

@@ -160,6 +160,13 @@ class RAGService:
         except Exception:  # pragma: no cover - persistence guard
             logger.exception("Failed to persist FAISS index to %s", self._index_dir)
 
+    def reset_embeddings(self) -> None:
+        """Drop cached embeddings/vector store so credentials can change at runtime."""
+
+        with self._lock:
+            self._embeddings = None
+            self._vectorstore = None
+
     # ------------------------------------------------------------------ #
     # Document utilities
     # ------------------------------------------------------------------ #

@@ -32,6 +32,9 @@
     promCpuThreshold: $('#promCpuThreshold'),
     promTest: $('#promTest'),
     promSave: $('#promSave'),
+    aiApiKey: $('#aiApiKey'),
+    aiStatus: $('#aiStatus'),
+    aiSave: $('#aiSave'),
     ragRefresh: $('#ragRefresh'),
     ragFileInput: $('#ragFileInput'),
     ragUploadButton: $('#ragUploadButton'),
@@ -257,6 +260,7 @@
     renderPreferences(state.preferences);
     renderSlack(state.slack);
     renderPrometheus(state.prometheus);
+    renderAi(state.ai);
     renderMetrics(state.monitor, state.prometheus);
     renderSamples(state.monitor);
     renderAlerts(state.alert_history);
@@ -447,6 +451,17 @@
     updateInputValue(elements.promHttpThreshold, settings.http_threshold || '0.05');
     updateInputValue(elements.promCpuQuery, settings.cpu_query || '');
     updateInputValue(elements.promCpuThreshold, settings.cpu_threshold || '0.80');
+  };
+
+  const renderAi = (aiState = {}) => {
+    if (!elements.aiStatus) {
+      return;
+    }
+    const configured = Boolean(aiState && aiState.configured);
+    elements.aiStatus.dataset.configured = String(configured);
+    elements.aiStatus.textContent = configured
+      ? 'API Key가 이미 설정되었습니다. 새 값을 입력하면 교체됩니다.'
+      : 'API Key가 아직 설정되지 않았습니다.';
   };
 
   const renderMetrics = (monitor, settings) => {
@@ -1432,6 +1447,28 @@
     }
   };
 
+  const handleAiSave = async () => {
+    if (!elements.aiApiKey) {
+      return;
+    }
+    const apiKey = elements.aiApiKey.value.trim();
+    setBusy(elements.aiSave, true);
+    try {
+      await request('/ai/save', {
+        method: 'POST',
+        body: { api_key: apiKey },
+      });
+      showToast(apiKey ? 'OpenAI API Key를 저장했습니다.' : 'OpenAI API Key를 초기화했습니다.');
+      elements.aiApiKey.value = '';
+      delete elements.aiApiKey.dataset.dirty;
+      await refreshState({ silent: true });
+    } catch (error) {
+      showToast(error.message || 'AI 설정 저장에 실패했습니다.', 'error');
+    } finally {
+      setBusy(elements.aiSave, false);
+    }
+  };
+
   const handleModalClose = async () => {
     if (!activeReport) {
       hideModal();
@@ -1581,6 +1618,9 @@
     }
     if (elements.promSave) {
       elements.promSave.addEventListener('click', handlePromSave);
+    }
+    if (elements.aiSave) {
+      elements.aiSave.addEventListener('click', handleAiSave);
     }
     if (elements.modalClose) {
       elements.modalClose.addEventListener('click', handleModalClose);

@@ -3,13 +3,15 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const http = require('http');
+const net = require('net');
 
 let backendProcess;
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const BACKEND_HOST = process.env.INCIDENT_BACKEND_HOST || '127.0.0.1';
 // Electron 런처는 기본적으로 8000 포트에서 백엔드를 기동한다.
-const BACKEND_PORT = process.env.INCIDENT_BACKEND_PORT || '8000';
-const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
+let BACKEND_PORT = process.env.INCIDENT_BACKEND_PORT || '8000';
+let BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
+process.env.INCIDENT_BACKEND_PORT = BACKEND_PORT;
 process.env.INCIDENT_BACKEND_URL = BACKEND_URL;
 
 function resolvePythonExecutable() {
@@ -46,6 +48,42 @@ function resolvePythonExecutable() {
   return 'python';
 }
 
+function findAvailablePort(startPort, host) {
+  const probe = (port) =>
+    new Promise((resolve, reject) => {
+      if (port > 65535) {
+        reject(new Error('No available port found for backend.'));
+        return;
+      }
+      const server = net.createServer();
+      server.unref();
+      server.once('error', (error) => {
+        if (error && (error.code === 'EADDRINUSE' || error.code === 'EACCES')) {
+          resolve(probe(port + 1));
+        } else {
+          reject(error);
+        }
+      });
+      server.once('listening', () => {
+        server.close(() => resolve(port));
+      });
+      server.listen(port, host);
+    });
+  return probe(startPort);
+}
+
+async function ensureBackendPortAvailability() {
+  const preferred = Number.parseInt(BACKEND_PORT, 10) || 8000;
+  const resolved = await findAvailablePort(preferred, BACKEND_HOST);
+  if (resolved !== preferred) {
+    console.log(`[backend] Port ${preferred} in use, switching to ${resolved}`);
+  }
+  BACKEND_PORT = String(resolved);
+  BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
+  process.env.INCIDENT_BACKEND_PORT = BACKEND_PORT;
+  process.env.INCIDENT_BACKEND_URL = BACKEND_URL;
+}
+
 function startBackend() {
   const python = resolvePythonExecutable();
   const env = {
@@ -61,7 +99,7 @@ function startBackend() {
     env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
-  console.log(`[backend] launching ${python}`);
+  console.log(`[backend] launching ${python} on ${BACKEND_URL}`);
 
   backendProcess.stdout.on('data', (data) => {
     console.log(`[backend] ${data.toString().trim()}`);
@@ -138,16 +176,22 @@ async function createWindow() {
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 
-app.whenReady().then(() => {
-  startBackend();
-  createWindow();
+app.whenReady()
+  .then(async () => {
+    await ensureBackendPortAvailability();
+    startBackend();
+    await createWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  })
+  .catch((error) => {
+    dialog.showErrorBox('Startup error', error?.message || 'Unknown startup failure.');
+    app.quit();
   });
-});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

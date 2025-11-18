@@ -62,28 +62,60 @@ class PrometheusMonitor:
             with STATE_LOCK:
                 STATE.monitor_samples.append(sample)
                 samples_snapshot = list(STATE.monitor_samples)
-                incident_active = STATE.incident_active
+                active_incidents = set(STATE.active_incidents)
 
             if len(samples_snapshot) < _WINDOW_SIZE:
                 continue
 
-            exceeded = any(s.any_exceeded for s in samples_snapshot)
-            if exceeded and not incident_active:
-                self._handle_incident(samples_snapshot[-1])
-                with STATE_LOCK:
-                    STATE.incident_active = True
-            elif not exceeded and incident_active:
-                with STATE_LOCK:
-                    STATE.incident_active = False
+            http_breach = any(s.http_exceeded for s in samples_snapshot)
+            cpu_breach = any(s.cpu_exceeded for s in samples_snapshot)
+            breaches: set[str] = set()
+            breach_samples: dict[str, MetricSample] = {}
+            latest_sample = samples_snapshot[-1]
 
-            if not exceeded:
+            if http_breach:
+                breaches.add("http_5xx_surge")
+                breach_samples["http_5xx_surge"] = next(
+                    (s for s in reversed(samples_snapshot) if s.http_exceeded),
+                    latest_sample,
+                )
+            if cpu_breach:
+                breaches.add("cpu_spike_core")
+                breach_samples["cpu_spike_core"] = next(
+                    (s for s in reversed(samples_snapshot) if s.cpu_exceeded),
+                    latest_sample,
+                )
+
+            new_breaches = breaches - active_incidents
+            for code in new_breaches:
+                trigger_sample = breach_samples.get(code, latest_sample)
+                handled_code = self._handle_incident(
+                    trigger_sample,
+                    preferred_code=code,
+                )
+                if handled_code:
+                    with STATE_LOCK:
+                        STATE.active_incidents.add(handled_code)
+
+            resolved_codes = active_incidents - breaches
+            if resolved_codes:
+                with STATE_LOCK:
+                    for code in resolved_codes:
+                        STATE.active_incidents.discard(code)
+
+            if not breaches:
                 self._maybe_record_recovery(sample)
 
-    def _handle_incident(self, sample: MetricSample) -> None:
-        scenario = self._select_scenario(sample)
+    def _handle_incident(
+        self,
+        sample: MetricSample,
+        *,
+        preferred_code: str | None = None,
+    ) -> str | None:
+        scenario = self._select_scenario(sample, preferred_code=preferred_code)
         if scenario is None:
             self._record_monitor_failure("No scenarios available to build incident report")
-            return
+            return None
 
         analysis = generate_incident_analysis(scenario, sample)
         report_body = analysis["report_text"]
@@ -117,6 +149,8 @@ class PrometheusMonitor:
                 if len(STATE.pending_reports) > 20:
                     STATE.pending_reports.pop(0)
 
+        return scenario.code
+
     def _deliver_report(
         self,
         scenario: AlertScenario,
@@ -138,11 +172,26 @@ class PrometheusMonitor:
                     recipients_missing.append(f"Slack delivery failed: {exc}")
             else:
                 recipients_missing.append("Slack settings are required")
+        else:
+            recipients_missing.append("Slack auto-delivery disabled in preferences")
+
+        if not recipients_sent and not recipients_missing:
+            recipients_missing.append(
+                "Automatic notifications disabled or missing configuration"
+            )
 
         return recipients_sent, recipients_missing
 
 
-    def _select_scenario(self, sample: MetricSample) -> AlertScenario | None:
+    def _select_scenario(
+        self,
+        sample: MetricSample,
+        preferred_code: str | None = None,
+    ) -> AlertScenario | None:
+        if preferred_code:
+            scenario = self._alert_service.get_scenario_by_code(preferred_code)
+            if scenario is not None:
+                return scenario
         primary_code = "http_5xx_surge"
         secondary_code = "cpu_spike_core"
 
