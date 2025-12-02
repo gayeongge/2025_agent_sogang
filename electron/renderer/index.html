@@ -37,6 +37,17 @@
           </div>
         </section>
 
+        <section class="card hotspot-card">
+          <div class="card-header">
+            <h2>Error Hotspots</h2>
+            <span id="hotspotBadge" class="hotspot-badge" data-variant="ok">임계 초과 없음</span>
+          </div>
+          <p class="hotspot-hint">http_error_rate와 cpu_usage가 어디서 터졌는지 확인하세요.</p>
+          <ul id="hotspotList" class="hotspot-list">
+            <li class="hotspot-empty">Prometheus 샘플을 기다리는 중입니다.</li>
+          </ul>
+        </section>
+
         <section class="card">
           <h2>Recent Incidents</h2>
           <ul id="alertList" class="list"></ul>
@@ -52,6 +63,13 @@
         <section class="card">
           <div class="card-header">
             <h2>System Feed</h2>
+            <div class="feed-controls">
+              <span id="systemFeedPageInfo" class="feed-page-info">1 / 1</span>
+              <div class="feed-buttons">
+                <button type="button" id="systemFeedPrev" class="ghost small">Prev</button>
+                <button type="button" id="systemFeedNext" class="ghost small">Next</button>
+              </div>
+            </div>
           </div>
           <div id="systemFeed" class="feed"></div>
         </section>

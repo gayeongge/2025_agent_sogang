@@ -12,10 +12,15 @@
     sampleToggle: $('#sampleToggle'),
     sampleContainer: $('#sampleContainer'),
     sampleList: $('#sampleList'),
+    hotspotBadge: $('#hotspotBadge'),
+    hotspotList: $('#hotspotList'),
     httpMetric: $('#httpMetric'),
     cpuMetric: $('#cpuMetric'),
     alertList: $('#alertList'),
     systemFeed: $('#systemFeed'),
+    systemFeedPrev: $('#systemFeedPrev'),
+    systemFeedNext: $('#systemFeedNext'),
+    systemFeedPageInfo: $('#systemFeedPageInfo'),
     notifySlack: $('#notifySlack'),
     slackToken: $('#slackToken'),
     slackWorkspace: $('#slackWorkspace'),
@@ -96,6 +101,7 @@
   const STORAGE_KEYS = {
     slackChannels: 'incident_console.slack_channels',
   };
+  const FEED_PAGE_SIZE = 5;
   const RECOVERY_STATUS_LABELS = {
     recovered: 'Recovered',
     pending: 'Pending',
@@ -110,6 +116,20 @@
     not_applicable: 'rag-pill--not_applicable',
     unknown: 'rag-pill--unknown',
   };
+  const INCIDENT_HINTS = {
+    http_5xx_surge: {
+      title: 'HTTP 5xx 폭주',
+      hint: 'Checkout/Gateway 경로 5xx 초과',
+      metric: 'http_error_rate',
+      detail: 'http_error_rate가 Checkout 또는 Gateway 구간에서 임계치를 넘었습니다.',
+    },
+    cpu_spike_core: {
+      title: 'CPU 사용량 스파이크',
+      hint: '엣지 노드/핫 파드 CPU 초과',
+      metric: 'cpu_usage',
+      detail: 'cpu_usage가 특정 노드 또는 파드에서 임계치를 넘었습니다.',
+    },
+  };
   let activeActionExecution = null;
   let activeTab = 'slack';
   let ragLoaded = false;
@@ -117,6 +137,8 @@
   let ragDocuments = [];
   let ragPage = 1;
   let customSlackChannels = [];
+  let feedPage = 1;
+  let feedEntries = [];
 
   const escapeHtml = (value) => {
     if (typeof value !== 'string') {
@@ -151,6 +173,57 @@
       return value;
     }
     return date.toLocaleString();
+  };
+
+  const buildScenarioLookup = (scenarios) => {
+    const map = {};
+    if (!Array.isArray(scenarios)) {
+      return map;
+    }
+    scenarios.forEach((scenario) => {
+      if (scenario && scenario.code) {
+        map[scenario.code] = scenario;
+      }
+    });
+    return map;
+  };
+
+  const isConfigFeed = (entry) => {
+    if (typeof entry !== 'string') {
+      return false;
+    }
+    const lower = entry.toLowerCase();
+    return (
+      lower.includes('설정') ||
+      lower.includes('settings saved') ||
+      lower.includes('api key') ||
+      lower.includes('configured')
+    );
+  };
+
+  const translateFeed = (entry) => {
+    if (!entry || typeof entry !== 'string') {
+      return '';
+    }
+    if (entry.includes('Slack 설정을 저장했습니다')) {
+      return entry;
+    }
+    if (entry.includes('Prometheus 설정을 저장했습니다')) {
+      return entry;
+    }
+    if (entry.includes('OpenAI API Key가 설정되었습니다')) {
+      return entry;
+    }
+    if (entry.includes('OpenAI API Key가 제거되었습니다')) {
+      return entry;
+    }
+    if (entry.includes('settings saved')) {
+      return entry.replace('settings saved', '설정을 저장했습니다');
+    }
+    if (entry.toLowerCase().includes('api key configured')) {
+      return entry.replace(/api key configured/i, 'API Key가 설정되었습니다');
+    }
+    return entry;
   };
 
   const setBusy = (button, busy) => {
@@ -262,9 +335,12 @@
     renderPrometheus(state.prometheus);
     renderAi(state.ai);
     renderMetrics(state.monitor, state.prometheus);
+    renderHotspots(state.monitor, state.scenarios);
     renderSamples(state.monitor);
     renderAlerts(state.alert_history);
-    renderFeed(state.feed);
+    feedEntries = Array.isArray(state.feed) ? state.feed.slice() : [];
+    feedPage = 1;
+    renderFeed();
     renderAnalysis(state);
     renderActionResults(state.action_executions);
     handleActionQueue(state.action_executions);
@@ -478,6 +554,142 @@
     applyMetric(elements.cpuMetric, latest && latest.cpu, cpuThreshold, latest && latest.cpu_exceeded);
   };
 
+  const renderHotspots = (monitor, scenarios) => {
+    const list = elements.hotspotList;
+    if (!list) {
+      return;
+    }
+    const badge = elements.hotspotBadge;
+    list.innerHTML = '';
+
+    const scenarioMap = buildScenarioLookup(scenarios);
+    const samples = monitor && Array.isArray(monitor.samples) ? monitor.samples : [];
+    const latest = samples.length ? samples[samples.length - 1] : null;
+    const reversedSamples = samples.slice().reverse();
+    const httpSample = reversedSamples.find((sample) => sample && sample.http_exceeded) || latest;
+    const cpuSample = reversedSamples.find((sample) => sample && sample.cpu_exceeded) || latest;
+    const activeIncidents =
+      monitor && Array.isArray(monitor.active_incidents) ? monitor.active_incidents : [];
+    const sampleNode = latest && typeof latest.node === 'string' ? latest.node : '';
+
+    const buildEntry = (code, metricKey, metricSample) => {
+      const scenario = scenarioMap[code] || {};
+      const fallback = INCIDENT_HINTS[code] || {};
+      const metric = metricKey || fallback.metric || '';
+      const valueKey = metric === 'http_error_rate' ? 'http' : 'cpu';
+      const thresholdKey = valueKey === 'http' ? 'http_threshold' : 'cpu_threshold';
+      const exceededKey = valueKey === 'http' ? 'http_exceeded' : 'cpu_exceeded';
+      const sampleForMetric = metricSample || latest;
+      const metricNode =
+        sampleForMetric && typeof sampleForMetric.node === 'string' ? sampleForMetric.node : sampleNode;
+      return {
+        code,
+        metric,
+        title: scenario.title || fallback.title || code,
+        hint: fallback.hint || scenario.description || scenario.source || metric || code,
+        detail:
+          (metricNode && metric
+            ? `${metricNode}에서 ${metric} 임계값을 초과했습니다.`
+            : '') ||
+          fallback.detail ||
+          scenario.description ||
+          '',
+        value: sampleForMetric ? sampleForMetric[valueKey] : null,
+        threshold: sampleForMetric ? sampleForMetric[thresholdKey] : null,
+        exceeded: sampleForMetric ? Boolean(sampleForMetric[exceededKey]) : false,
+        active: activeIncidents.includes(code),
+      };
+    };
+
+    const entries = [
+      buildEntry('http_5xx_surge', 'http_error_rate', httpSample),
+      buildEntry('cpu_spike_core', 'cpu_usage', cpuSample),
+    ];
+
+    const alertingEntries = entries.filter((entry) => entry.exceeded || entry.active);
+    const hasAnyData = Boolean(latest) || activeIncidents.length > 0;
+
+    if (!hasAnyData || !alertingEntries.length) {
+      const empty = document.createElement('li');
+      empty.className = 'hotspot-empty';
+      empty.textContent = hasAnyData
+        ? '현재 임계값을 넘은 이벤트가 없습니다.'
+        : 'Prometheus 샘플을 기다리는 중입니다.';
+      list.appendChild(empty);
+      if (badge) {
+        badge.textContent = '임계 초과 없음';
+        badge.dataset.variant = 'ok';
+      }
+      return;
+    }
+
+    const alertingCount = alertingEntries.length;
+
+    alertingEntries.forEach((entry) => {
+      const item = document.createElement('li');
+      item.className = 'hotspot-item';
+      if (entry.exceeded || entry.active) {
+        item.dataset.status = 'alert';
+      }
+      if (entry.active) {
+        item.dataset.active = 'true';
+      }
+
+      const left = document.createElement('div');
+      left.className = 'hotspot-left';
+
+      const title = document.createElement('p');
+      title.className = 'hotspot-title';
+      title.textContent = entry.title;
+
+      const meta = document.createElement('p');
+      meta.className = 'hotspot-meta';
+      meta.textContent = entry.hint;
+
+      const detail = document.createElement('p');
+      detail.className = 'hotspot-detail';
+      detail.textContent =
+        entry.detail ||
+        `${entry.metric}가 임계치를 초과했습니다. 어디서 발생했는지 확인하세요.`;
+
+      left.appendChild(title);
+      left.appendChild(meta);
+      left.appendChild(detail);
+
+      const metric = document.createElement('div');
+      metric.className = 'hotspot-metric';
+
+      const metricLabel = document.createElement('span');
+      metricLabel.className = 'hotspot-metric__label';
+      metricLabel.textContent = entry.metric || entry.code;
+
+      const metricValue = document.createElement('strong');
+      metricValue.textContent = formatNumber(entry.value);
+
+      const metricThreshold = document.createElement('span');
+      metricThreshold.className = 'hotspot-threshold';
+      metricThreshold.textContent = `thr ${formatNumber(entry.threshold)}`;
+
+      const state = document.createElement('span');
+      state.className = 'hotspot-state';
+      state.textContent = entry.exceeded || entry.active ? 'Alerting' : 'Normal';
+
+      metric.appendChild(metricLabel);
+      metric.appendChild(metricValue);
+      metric.appendChild(metricThreshold);
+      metric.appendChild(state);
+
+      item.appendChild(left);
+      item.appendChild(metric);
+      list.appendChild(item);
+    });
+
+    if (badge) {
+      badge.textContent = alertingCount ? `${alertingCount}건 임계 초과` : '임계 초과 없음';
+      badge.dataset.variant = alertingCount ? 'alert' : 'ok';
+    }
+  };
+
   const applyMetric = (element, value, threshold, exceeded) => {
     if (!element) {
       return;
@@ -528,7 +740,8 @@
       .reverse()
       .forEach((sample) => {
         const item = document.createElement('li');
-        item.textContent = `${formatDate(sample.timestamp)} · HTTP ${formatNumber(
+        const nodeText = sample.node ? `${sample.node} · ` : '';
+        item.textContent = `${formatDate(sample.timestamp)} · ${nodeText}HTTP ${formatNumber(
           sample.http
         )} / ${formatNumber(sample.http_threshold)} · CPU ${formatNumber(sample.cpu)} / ${formatNumber(
           sample.cpu_threshold
@@ -560,27 +773,50 @@
     });
   };
 
-  const renderFeed = (feed) => {
+  const renderFeed = () => {
     const container = elements.systemFeed;
     if (!container) {
       return;
     }
-    container.innerHTML = '';
-    const entries = Array.isArray(feed) ? feed.slice() : [];
-    if (!entries.length) {
-      container.textContent = '시스템 피드가 비어 있습니다.';
-      return;
+    const entries = Array.isArray(feedEntries) ? feedEntries.slice() : [];
+    const filtered = entries.filter(isConfigFeed);
+    const ordered = filtered.slice().reverse();
+    const totalPages = Math.max(1, Math.ceil(ordered.length / FEED_PAGE_SIZE));
+    if (feedPage > totalPages) {
+      feedPage = totalPages;
     }
-    entries
-      .slice()
-      .reverse()
-      .slice(0, 40)
-      .forEach((entry) => {
+    const start = (feedPage - 1) * FEED_PAGE_SIZE;
+    const pageEntries = ordered.slice(start, start + FEED_PAGE_SIZE);
+
+    container.innerHTML = '';
+    if (!pageEntries.length) {
+      container.textContent = '설정 변경 이력이 없습니다.';
+    } else {
+      pageEntries.forEach((entry) => {
         const block = document.createElement('div');
         block.className = 'feed-entry';
-        block.textContent = entry;
+        block.textContent = translateFeed(entry);
         container.appendChild(block);
       });
+    }
+
+    if (elements.systemFeedPageInfo) {
+      elements.systemFeedPageInfo.textContent = `${Math.min(feedPage, totalPages)} / ${totalPages}`;
+    }
+    if (elements.systemFeedPrev) {
+      if (feedPage > 1) {
+        elements.systemFeedPrev.removeAttribute('disabled');
+      } else {
+        elements.systemFeedPrev.setAttribute('disabled', 'disabled');
+      }
+    }
+    if (elements.systemFeedNext) {
+      if (feedPage < totalPages) {
+        elements.systemFeedNext.removeAttribute('disabled');
+      } else {
+        elements.systemFeedNext.setAttribute('disabled', 'disabled');
+      }
+    }
   };
 
   const renderAnalysis = (state) => {
@@ -793,6 +1029,15 @@
         next.removeAttribute('disabled');
       }
     }
+  };
+
+  const goToFeedPage = (nextPage) => {
+    const entries = Array.isArray(feedEntries) ? feedEntries.slice() : [];
+    const filtered = entries.filter(isConfigFeed);
+    const totalPages = Math.max(1, Math.ceil(filtered.length / FEED_PAGE_SIZE));
+    const target = Math.min(Math.max(1, nextPage), totalPages);
+    feedPage = target;
+    renderFeed();
   };
 
   const renderRagDocuments = (documents) => {
@@ -1535,6 +1780,17 @@
     if (elements.ragNextPage) {
       elements.ragNextPage.addEventListener('click', () => {
         goToRagPage(ragPage + 1);
+      });
+    }
+
+    if (elements.systemFeedPrev) {
+      elements.systemFeedPrev.addEventListener('click', () => {
+        goToFeedPage(feedPage - 1);
+      });
+    }
+    if (elements.systemFeedNext) {
+      elements.systemFeedNext.addEventListener('click', () => {
+        goToFeedPage(feedPage + 1);
       });
     }
 

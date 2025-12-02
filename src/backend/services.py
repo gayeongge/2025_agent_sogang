@@ -37,7 +37,7 @@ class SlackService:
     def save(self, settings: SlackSettings) -> str:
         with STATE_LOCK:
             STATE.slack = settings
-            message = f"Slack settings saved for {settings.workspace or 'workspace'}"
+            message = f"Slack 설정을 저장했습니다 ({settings.workspace or 'workspace'})"
             STATE.append_feed(_feed_line(message))
         return message
 
@@ -99,7 +99,7 @@ class PrometheusService:
         parse_threshold(settings.cpu_threshold, default=0.80)
         with STATE_LOCK:
             STATE.prometheus = settings
-            message = f"Prometheus settings saved for {settings.url or '(unset)'}"
+            message = f"Prometheus 설정을 저장했습니다 ({settings.url or '(unset)'})"
             STATE.append_feed(_feed_line(message))
         return message
 
@@ -204,6 +204,15 @@ class AlertService:
                 "feed": list(STATE.feed),
                 "alert_history": list(STATE.alert_history),
                 "last_alert": serialize_scenario(STATE.last_alert) if STATE.last_alert else None,
+                "scenarios": [
+                    {
+                        "code": scenario.code,
+                        "title": scenario.title,
+                        "source": scenario.source,
+                        "description": scenario.description,
+                    }
+                    for scenario in STATE.scenarios
+                ],
                 "monitor": {
                     "samples": [serialize_sample(sample) for sample in STATE.monitor_samples],
                     "incident_active": bool(STATE.active_incidents),
@@ -237,9 +246,9 @@ class AIService:
         with STATE_LOCK:
             STATE.ai.api_key = updated_value
             message = (
-                "OpenAI API key configured."
+                "OpenAI API Key가 설정되었습니다."
                 if updated_value
-                else "OpenAI API key cleared."
+                else "OpenAI API Key가 제거되었습니다."
             )
             STATE.append_feed(_feed_line(message))
         set_openai_api_key(updated_value)
@@ -271,6 +280,7 @@ def serialize_sample(sample: MetricSample) -> Dict[str, object]:
         "cpu": sample.cpu,
         "cpu_threshold": sample.cpu_threshold,
         "cpu_exceeded": sample.cpu_exceeded,
+        "node": sample.node,
     }
 
 

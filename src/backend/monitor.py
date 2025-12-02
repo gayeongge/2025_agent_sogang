@@ -36,6 +36,12 @@ class PrometheusMonitor:
         self._action_service = action_service
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
+        self._sample_nodes: Tuple[str, ...] = (
+            "edge-node-01",
+            "edge-node-02",
+            "edge-node-03",
+        )
+        self._node_index = 0
 
     def start(self) -> None:
         if not self._thread.is_alive():
@@ -58,7 +64,13 @@ class PrometheusMonitor:
                 self._record_monitor_failure(f"Prometheus query failed: {exc}")
                 continue
 
-            sample = make_sample(http_val, http_threshold, cpu_val, cpu_threshold)
+            sample = make_sample(
+                http_val,
+                http_threshold,
+                cpu_val,
+                cpu_threshold,
+                node=self._next_node(),
+            )
             with STATE_LOCK:
                 STATE.monitor_samples.append(sample)
                 samples_snapshot = list(STATE.monitor_samples)
@@ -105,6 +117,13 @@ class PrometheusMonitor:
 
             if not breaches:
                 self._maybe_record_recovery(sample)
+
+    def _next_node(self) -> str:
+        if not self._sample_nodes:
+            return ""
+        node = self._sample_nodes[self._node_index % len(self._sample_nodes)]
+        self._node_index += 1
+        return node
 
     def _handle_incident(
         self,

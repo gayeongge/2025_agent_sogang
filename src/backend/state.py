@@ -27,6 +27,7 @@ class MetricSample:
     http_threshold: float
     cpu: float
     cpu_threshold: float
+    node: str = ""
 
     @property
     def http_exceeded(self) -> bool:
@@ -139,7 +140,14 @@ STATE = AppState()
 STATE_LOCK = Lock()
 
 
-def make_sample(http: float, http_threshold: float, cpu: float, cpu_threshold: float) -> MetricSample:
+def make_sample(
+    http: float,
+    http_threshold: float,
+    cpu: float,
+    cpu_threshold: float,
+    *,
+    node: str | None = None,
+) -> MetricSample:
     """Factory helper to build a timestamped metric sample."""
 
     return MetricSample(
@@ -148,4 +156,5 @@ def make_sample(http: float, http_threshold: float, cpu: float, cpu_threshold: f
         http_threshold=http_threshold,
         cpu=cpu,
         cpu_threshold=cpu_threshold,
+        node=node or "",
     )

@@ -400,6 +400,22 @@ button.wide {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
+.feed-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feed-page-info {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.feed-buttons {
+  display: flex;
+  gap: 6px;
+}
+
 .feed-entry {
   margin-bottom: 12px;
   padding: 10px 14px;
@@ -530,6 +546,135 @@ button.wide {
 
 .sample-container[data-open="true"] {
   display: block;
+}
+
+.hotspot-card {
+  gap: 12px;
+}
+
+.hotspot-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hotspot-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.hotspot-badge[data-variant="alert"] {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.hotspot-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hotspot-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.hotspot-item[data-status="alert"] {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.hotspot-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hotspot-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hotspot-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hotspot-detail {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.hotspot-metric {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  grid-auto-rows: auto;
+  row-gap: 4px;
+  column-gap: 8px;
+  align-items: center;
+  text-align: right;
+}
+
+.hotspot-metric__label {
+  font-size: 12px;
+  color: var(--muted);
+  grid-column: 1 / 3;
+  justify-self: end;
+}
+
+.hotspot-metric strong {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.hotspot-threshold {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hotspot-state {
+  grid-column: 1 / 3;
+  justify-self: end;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-strong);
+}
+
+.hotspot-item[data-status="alert"] .hotspot-state {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+}
+
+.hotspot-empty {
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .preferences-card {
