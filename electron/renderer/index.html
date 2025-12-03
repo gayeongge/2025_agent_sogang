@@ -129,6 +129,7 @@
           <button class="tab active" data-tab="slack" role="tab">Slack</button>
           <button class="tab" data-tab="prometheus" role="tab">Prometheus</button>
           <button class="tab" data-tab="ai" role="tab">AI</button>
+          <button class="tab" data-tab="email" role="tab">Email</button>
           <button class="tab" data-tab="actions" role="tab">조치 결과</button>
         </nav>
 
@@ -190,6 +191,34 @@
               <button type="button" id="aiSave" class="primary">Save</button>
             </div>
           </form>
+        </section>
+
+        <section class="tab-content" id="tab-email" role="tabpanel">
+          <h2>이메일 알림</h2>
+          <p class="email-hint">
+            SMTP 정보가 설정되어 있다면 아래 MCP 연락처로 조치 상태가 전달됩니다. 등록된 주소가 없으면
+            메일을 전송하지 않습니다.
+          </p>
+          <div class="email-form">
+            <input
+              type="email"
+              id="emailInput"
+              placeholder="alerts@example.com"
+              autocomplete="off"
+              aria-label="이메일 주소"
+            />
+            <button type="button" id="emailAddButton" class="primary" disabled>등록</button>
+          </div>
+          <ul id="emailList" class="email-list empty">
+            <li class="email-empty">등록된 이메일 주소가 없습니다.</li>
+          </ul>
+          <div class="email-pagination">
+            <span id="emailPageInfo" class="email-page-info">0 / 0</span>
+            <div class="email-pagination__controls">
+              <button type="button" id="emailPrevPage" class="ghost small" disabled>Prev</button>
+              <button type="button" id="emailNextPage" class="ghost small" disabled>Next</button>
+            </div>
+          </div>
         </section>
 
         <section class="tab-content" id="tab-actions" role="tabpanel">

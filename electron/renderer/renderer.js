@@ -48,6 +48,12 @@
     ragPageInfo: $('#ragPageInfo'),
     ragPrevPage: $('#ragPrevPage'),
     ragNextPage: $('#ragNextPage'),
+    emailInput: $('#emailInput'),
+    emailAddButton: $('#emailAddButton'),
+    emailList: $('#emailList'),
+    emailPageInfo: $('#emailPageInfo'),
+    emailPrevPage: $('#emailPrevPage'),
+    emailNextPage: $('#emailNextPage'),
     toast: $('#toast'),
     analysisContent: $('#analysisContent'),
     modal: $('#reportModal'),
@@ -97,6 +103,8 @@
     reference: 'rag-pill--reference',
   };
   const RAG_PAGE_SIZE = 5;
+  const EMAIL_PAGE_SIZE = 5;
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
   const DEFAULT_SLACK_CHANNELS = ['#ops-incident', '#eng-incident', '#site-reliability'];
   const STORAGE_KEYS = {
     slackChannels: 'incident_console.slack_channels',
@@ -136,6 +144,9 @@
   let ragLoading = false;
   let ragDocuments = [];
   let ragPage = 1;
+  let emailRecipients = [];
+  let emailPage = 1;
+  let emailRequestBusy = false;
   let customSlackChannels = [];
   let feedPage = 1;
   let feedEntries = [];
@@ -326,10 +337,234 @@
     }
   };
 
+  const normalizeEmail = (value) => {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    return value.trim().toLowerCase();
+  };
+
+  const getEmailPageCount = () => {
+    if (!emailRecipients.length) {
+      return 0;
+    }
+    return Math.ceil(emailRecipients.length / EMAIL_PAGE_SIZE);
+  };
+
+  const applyEmailRecipients = (recipients, { resetPage = true } = {}) => {
+    if (Array.isArray(recipients)) {
+      emailRecipients = recipients
+        .slice()
+        .map((entry) => ({
+          ...entry,
+          email: normalizeEmail(entry && entry.email ? String(entry.email) : ''),
+        }))
+        .filter((entry) => entry.email);
+      emailRecipients.sort((a, b) => {
+        const aTime = new Date(a.created_at || 0).getTime();
+        const bTime = new Date(b.created_at || 0).getTime();
+        if (Number.isNaN(aTime) && Number.isNaN(bTime)) {
+          return 0;
+        }
+        if (Number.isNaN(aTime)) {
+          return 1;
+        }
+        if (Number.isNaN(bTime)) {
+          return -1;
+        }
+        return bTime - aTime;
+      });
+    } else {
+      emailRecipients = [];
+    }
+
+    if (resetPage) {
+      emailPage = 1;
+    }
+
+    const totalPages = getEmailPageCount();
+    if (totalPages > 0) {
+      if (emailPage < 1) {
+        emailPage = 1;
+      }
+      if (emailPage > totalPages) {
+        emailPage = totalPages;
+      }
+    } else {
+      emailPage = 1;
+    }
+
+    renderEmailList();
+  };
+
+  const getEmailPageItems = () => {
+    if (!emailRecipients.length) {
+      return [];
+    }
+    const startIndex = (Math.max(emailPage, 1) - 1) * EMAIL_PAGE_SIZE;
+    return emailRecipients.slice(startIndex, startIndex + EMAIL_PAGE_SIZE);
+  };
+
+  const renderEmailList = () => {
+    const list = elements.emailList;
+    if (!list) {
+      return;
+    }
+    const entries = getEmailPageItems();
+    if (!emailRecipients.length) {
+      list.classList.add('empty');
+      list.innerHTML = '<li class="email-empty">등록된 이메일 주소가 없습니다.</li>';
+    } else {
+      list.classList.remove('empty');
+      list.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+      entries.forEach((recipient) => {
+        const item = document.createElement('li');
+        item.className = 'email-entry';
+
+        const info = document.createElement('div');
+        info.className = 'email-entry__info';
+
+        const address = document.createElement('span');
+        address.className = 'email-entry__address';
+        address.textContent = recipient.email;
+        info.appendChild(address);
+
+        const meta = document.createElement('span');
+        meta.className = 'email-entry__meta';
+        meta.textContent = formatDate(recipient.created_at);
+        info.appendChild(meta);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'ghost small danger email-entry__delete';
+        remove.dataset.recipientId = recipient.id;
+        remove.textContent = '삭제';
+
+        item.appendChild(info);
+        item.appendChild(remove);
+        fragment.appendChild(item);
+      });
+      list.appendChild(fragment);
+    }
+    updateEmailPaginationControls();
+  };
+
+  const updateEmailPaginationControls = () => {
+    const info = elements.emailPageInfo;
+    const prev = elements.emailPrevPage;
+    const next = elements.emailNextPage;
+    const totalPages = getEmailPageCount();
+    if (info) {
+      info.textContent = totalPages === 0 ? '0 / 0' : `${emailPage} / ${totalPages}`;
+    }
+    if (prev) {
+      prev.disabled = totalPages <= 1 || emailPage <= 1;
+    }
+    if (next) {
+      next.disabled = totalPages === 0 || emailPage >= totalPages;
+    }
+  };
+
+  const goToEmailPage = (nextPage) => {
+    if (!emailRecipients.length) {
+      return;
+    }
+    const totalPages = getEmailPageCount();
+    const target = Math.min(Math.max(nextPage, 1), totalPages);
+    if (target === emailPage) {
+      return;
+    }
+    emailPage = target;
+    renderEmailList();
+  };
+
+  const getEmailInputValue = () => {
+    if (!elements.emailInput) {
+      return '';
+    }
+    return elements.emailInput.value.trim();
+  };
+
+  const updateEmailFormState = () => {
+    if (!elements.emailAddButton) {
+      return;
+    }
+    const value = getEmailInputValue();
+    const valid = Boolean(value && EMAIL_PATTERN.test(value));
+    elements.emailAddButton.disabled = !valid || emailRequestBusy;
+  };
+
+  const refreshEmailRecipients = async ({ silent = false } = {}) => {
+    try {
+      const payload = await request('/notifications/emails');
+      applyEmailRecipients(payload && payload.emails, { resetPage: false });
+    } catch (error) {
+      if (!silent) {
+        showToast(error.message || '이메일 목록을 불러오지 못했습니다.', 'error');
+      }
+    }
+  };
+
+  const handleEmailAdd = async () => {
+    const email = getEmailInputValue();
+    if (!email || !EMAIL_PATTERN.test(email)) {
+      showToast('유효한 이메일 주소를 입력하세요.', 'error');
+      return;
+    }
+    if (emailRequestBusy) {
+      return;
+    }
+    emailRequestBusy = true;
+    updateEmailFormState();
+    setBusy(elements.emailAddButton, true);
+    try {
+      await request('/notifications/emails', {
+        method: 'POST',
+        body: { email },
+      });
+      showToast('이메일을 등록했습니다.');
+      if (elements.emailInput) {
+        elements.emailInput.value = '';
+      }
+      await refreshEmailRecipients({ silent: true });
+    } catch (error) {
+      showToast(error.message || '이메일 등록에 실패했습니다.', 'error');
+    } finally {
+      emailRequestBusy = false;
+      setBusy(elements.emailAddButton, false);
+      updateEmailFormState();
+    }
+  };
+
+  const handleEmailDelete = async (recipientId) => {
+    if (!recipientId) {
+      return;
+    }
+    if (emailRequestBusy) {
+      return;
+    }
+    emailRequestBusy = true;
+    updateEmailFormState();
+    try {
+      await request(`/notifications/emails/${encodeURIComponent(recipientId)}`, {
+        method: 'DELETE',
+      });
+      showToast('이메일을 삭제했습니다.');
+      await refreshEmailRecipients({ silent: true });
+    } catch (error) {
+      showToast(error.message || '이메일 삭제에 실패했습니다.', 'error');
+    } finally {
+      emailRequestBusy = false;
+      updateEmailFormState();
+    }
+  };
+
   const renderState = (state = {}) => {
     if (!state || typeof state !== 'object') {
       return;
     }
+    applyEmailRecipients(state.email_recipients, { resetPage: false });
     renderPreferences(state.preferences);
     renderSlack(state.slack);
     renderPrometheus(state.prometheus);
@@ -1802,6 +2037,32 @@
       elements.ragUploadButton.addEventListener('click', handleRagUpload);
     }
 
+    if (elements.emailAddButton) {
+      elements.emailAddButton.addEventListener('click', handleEmailAdd);
+    }
+    if (elements.emailInput) {
+      elements.emailInput.addEventListener('input', updateEmailFormState);
+    }
+    if (elements.emailPrevPage) {
+      elements.emailPrevPage.addEventListener('click', () => {
+        goToEmailPage(emailPage - 1);
+      });
+    }
+    if (elements.emailNextPage) {
+      elements.emailNextPage.addEventListener('click', () => {
+        goToEmailPage(emailPage + 1);
+      });
+    }
+    if (elements.emailList) {
+      elements.emailList.addEventListener('click', (event) => {
+        const target = event.target.closest('.email-entry__delete');
+        if (!target) {
+          return;
+        }
+        handleEmailDelete(target.dataset.recipientId);
+      });
+    }
+
     if (elements.slackChannel) {
       elements.slackChannel.addEventListener('change', () => {
         updateSlackRemoveButtonState();
@@ -1891,6 +2152,8 @@
     updateRagUploadState();
     updateRagPaginationControls();
     updateSlackRemoveButtonState();
+    updateEmailFormState();
+    updateEmailPaginationControls();
   };
 
   document.addEventListener('DOMContentLoaded', () => {

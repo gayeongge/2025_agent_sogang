@@ -104,6 +104,15 @@ class RecoveryCheck:
 
 
 @dataclass
+class EmailRecipient:
+    """Single email subscriber entry for action status notifications."""
+
+    id: str
+    email: str
+    created_at: str
+
+
+@dataclass
 class AppState:
     """Mutable state shared across API requests."""
 
@@ -127,6 +136,7 @@ class AppState:
     pending_reports: List[IncidentReport] = field(default_factory=list)
     action_executions: List[ActionExecution] = field(default_factory=list)
     recovery_checks: List[RecoveryCheck] = field(default_factory=list)
+    email_recipients: List[EmailRecipient] = field(default_factory=list)
 
     def append_feed(self, message: str) -> None:
         self.feed.append(message)

@@ -50,6 +50,17 @@ source .venv/bin/activate && pip install -r requirements.txt  # macOS/Linux
 
 Configuration values (e.g. `OPENAI_API_KEY`, integration tokens) can still be stored in `.env` at the project root.
 
+### Optional email notifications (MCP)
+
+Set the following environment variables if you want executed/deferred action plans to be emailed to the contacts configured in the UI:
+
+- `INCIDENT_EMAIL_SMTP_HOST` / `INCIDENT_EMAIL_SMTP_PORT`
+- `INCIDENT_EMAIL_SMTP_USER` / `INCIDENT_EMAIL_SMTP_PASSWORD`
+- `INCIDENT_EMAIL_FROM` (defaults to the SMTP user)
+- `INCIDENT_EMAIL_SMTP_TLS` (`1` to enable STARTTLS, `0` to skip)
+
+When these are omitted the MCP email notifier stays disabled for safety.
+
 ## Electron UI setup
 
 ```bash
@@ -98,6 +109,7 @@ All responses are JSON; errors use FastAPI Problem Details with `detail` explain
 - The Electron renderer is now the sole UI surface, featuring a bright monotone-inspired layout tuned for quick operator scans.
 - A background Prometheus monitor samples metrics every few seconds, detects anomalies when at least one of the latest five samples breaches a threshold, and auto-generates incident reports.
 - Notification targets (Slack) can be toggled via checkboxes so operators immediately know which channel will receive the automated report.
+- Additional MCP email recipients can be configured from the settings panel; up to five addresses are shown per page with add/remove controls and paginated history. Action execution results are mailed (when SMTP is configured) only if at least one address exists.
 
 - When an OpenAI API key is configured, the Prometheus breach path invokes the AI-written Korean analysis/action plan before dispatching to Slack (otherwise a deterministic fallback is used).
 

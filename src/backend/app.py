@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from src.backend.actions import ActionExecutionService
 from src.backend.fake_actions_api import fake_actions_app
@@ -16,9 +16,12 @@ from src.backend.rag import RAGService, rag_service
 from src.backend.services import (
     AIService,
     AlertService,
+    EmailDeliveryService,
+    EmailRegistryService,
     PrometheusService,
     SlackService,
     serialize_action_execution,
+    serialize_email_recipient,
 )
 from src.backend.state import STATE, STATE_LOCK
 from src.incident_console.errors import IntegrationError
@@ -36,6 +39,8 @@ monitor = PrometheusMonitor(
 )
 rag_service.bootstrap_scenarios(STATE.scenarios)
 ai_service = AIService(on_change=rag_service.reset_embeddings)
+email_registry_service = EmailRegistryService()
+email_delivery_service = EmailDeliveryService(email_registry_service)
 
 
 class SlackSettingsPayload(BaseModel):
@@ -68,6 +73,10 @@ class NotificationPreferencePayload(BaseModel):
 
 class AISettingsPayload(BaseModel):
     api_key: str = Field("", description="OpenAI API key used for analysis/RAG")
+
+
+class EmailRecipientPayload(BaseModel):
+    email: EmailStr = Field(..., description="Email address that should receive MCP action updates")
 
 
 ALLOWED_RAG_UPLOAD_SUFFIXES = {".json", ".txt"}
@@ -335,15 +344,37 @@ def update_notification_preferences(
     return current
 
 
+@app.get("/notifications/emails")
+def list_notification_emails() -> dict[str, object]:
+    recipients = email_registry_service.list_recipients()
+    return {
+        "emails": [serialize_email_recipient(rec) for rec in recipients],
+    }
+
+
+@app.post("/notifications/emails")
+def add_notification_email(payload: EmailRecipientPayload) -> dict[str, object]:
+    recipient = _handle_errors(lambda: email_registry_service.add_recipient(payload.email))
+    return {"recipient": serialize_email_recipient(recipient)}
+
+
+@app.delete("/notifications/emails/{recipient_id}")
+def remove_notification_email(recipient_id: str) -> dict[str, object]:
+    _handle_errors(lambda: email_registry_service.remove_recipient(recipient_id))
+    return {"removed": recipient_id}
+
+
 @app.post("/actions/{execution_id}/execute")
 def execute_action_plan(execution_id: str) -> dict[str, object]:
     execution = _handle_errors(lambda: action_service.execute_pending(execution_id))
+    email_delivery_service.send_action_status(execution, status="executed")
     return {"execution": serialize_action_execution(execution)}
 
 
 @app.post("/actions/{execution_id}/defer")
 def defer_action_plan(execution_id: str) -> dict[str, object]:
     execution = _handle_errors(lambda: action_service.defer_execution(execution_id))
+    email_delivery_service.send_action_status(execution, status="deferred")
     return {"execution": serialize_action_execution(execution)}
 
 

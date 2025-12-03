@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import logging
+import os
 import random
+import re
+import smtplib
 from dataclasses import asdict
+from email.message import EmailMessage
 from typing import Callable, Dict, List, Optional, Tuple
+from uuid import uuid4
 
 from src.backend.state import (
     STATE,
@@ -13,6 +19,7 @@ from src.backend.state import (
     ActionExecutionResult,
     IncidentReport,
     MetricSample,
+    EmailRecipient,
     make_sample,
 )
 from src.incident_console.config import set_openai_api_key
@@ -24,7 +31,10 @@ from src.incident_console.models import (
     PrometheusSettings,
     SlackSettings,
 )
-from src.incident_console.utils import parse_threshold, timestamp
+from src.incident_console.utils import parse_threshold, timestamp, utcnow_iso
+
+
+logger = logging.getLogger("incident.email")
 
 
 class SlackService:
@@ -201,6 +211,10 @@ class AlertService:
                 "ai": {
                     "configured": bool(STATE.ai.api_key),
                 },
+                "email_recipients": [
+                    serialize_email_recipient(rec)
+                    for rec in STATE.email_recipients
+                ],
                 "feed": list(STATE.feed),
                 "alert_history": list(STATE.alert_history),
                 "last_alert": serialize_scenario(STATE.last_alert) if STATE.last_alert else None,
@@ -255,6 +269,152 @@ class AIService:
         if self._on_change:
             self._on_change()
         return message
+
+
+class EmailRegistryService:
+    """In-memory registry for email recipients used for MCP notifications."""
+
+    _EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORECASE)
+
+    def list_recipients(self) -> List[EmailRecipient]:
+        with STATE_LOCK:
+            return list(STATE.email_recipients)
+
+    def add_recipient(self, email: str) -> EmailRecipient:
+        normalized = self._normalize(email)
+        if not normalized:
+            raise ValueError("유효한 이메일 주소를 입력하세요.")
+
+        with STATE_LOCK:
+            if any(rec.email.lower() == normalized for rec in STATE.email_recipients):
+                raise ValueError("이미 등록된 이메일입니다.")
+
+            recipient = EmailRecipient(
+                id=str(uuid4()),
+                email=normalized,
+                created_at=utcnow_iso(),
+            )
+            STATE.email_recipients.append(recipient)
+            STATE.append_feed(_feed_line(f"Email recipient added: {normalized}"))
+            return recipient
+
+    def remove_recipient(self, recipient_id: str) -> None:
+        if not recipient_id:
+            raise ValueError("삭제할 대상을 선택하세요.")
+
+        with STATE_LOCK:
+            for index, recipient in enumerate(STATE.email_recipients):
+                if recipient.id == recipient_id:
+                    removed = STATE.email_recipients.pop(index)
+                    STATE.append_feed(_feed_line(f"Email recipient removed: {removed.email}"))
+                    return
+
+        raise ValueError("대상을 찾을 수 없습니다.")
+
+    def _normalize(self, email: str) -> str:
+        value = (email or "").strip().lower()
+        if value and self._EMAIL_PATTERN.match(value):
+            return value
+        return ""
+
+
+class EmailDeliveryService:
+    """Lightweight SMTP sender for action-status notifications."""
+
+    def __init__(self, registry: Optional[EmailRegistryService] = None) -> None:
+        self._registry = registry or EmailRegistryService()
+
+    def send_action_status(self, execution: ActionExecution, status: str) -> None:
+        recipients = self._registry.list_recipients()
+        if not recipients:
+            logger.info("Skipping email notification (no recipients configured).")
+            return
+
+        addresses = [recipient.email for recipient in recipients if recipient.email]
+        if not addresses:
+            logger.info("Skipping email notification (recipients invalid).")
+            return
+
+        status_label = status.capitalize()
+        subject = f"[Incident] {execution.scenario_title} - {status_label}"
+        body = self._build_action_email_body(execution, status_label)
+        if self._deliver(addresses, subject, body):
+            with STATE_LOCK:
+                STATE.append_feed(
+                    _feed_line(
+                        f"Action status emailed to {len(addresses)} recipient(s)"
+                    )
+                )
+
+    def _deliver(self, recipients: List[str], subject: str, body: str) -> bool:
+        settings = self._smtp_settings()
+        if not settings["host"]:
+            logger.info("Email SMTP host missing; notification skipped.")
+            return False
+
+        message = EmailMessage()
+        message["Subject"] = subject
+        message["From"] = settings["sender"]
+        message["To"] = ", ".join(recipients)
+        message.set_content(body)
+
+        try:
+            with smtplib.SMTP(settings["host"], settings["port"], timeout=10) as server:
+                if settings["use_tls"]:
+                    server.starttls()
+                if settings["username"]:
+                    server.login(settings["username"], settings["password"])
+                server.send_message(message)
+            return True
+        except Exception:
+            logger.exception("Failed to send email notification.")
+            return False
+
+    def _smtp_settings(self) -> Dict[str, object]:
+        host = os.getenv("INCIDENT_EMAIL_SMTP_HOST", "").strip()
+        port = int(os.getenv("INCIDENT_EMAIL_SMTP_PORT", "587") or "587")
+        username = os.getenv("INCIDENT_EMAIL_SMTP_USER", "").strip()
+        password = os.getenv("INCIDENT_EMAIL_SMTP_PASSWORD", "")
+        sender = os.getenv("INCIDENT_EMAIL_FROM", username or "incident-console@example.com").strip()
+        use_tls = os.getenv("INCIDENT_EMAIL_SMTP_TLS", "1") != "0"
+        return {
+            "host": host,
+            "port": port,
+            "username": username,
+            "password": password,
+            "sender": sender,
+            "use_tls": use_tls,
+        }
+
+    def _build_action_email_body(
+        self,
+        execution: ActionExecution,
+        status_label: str,
+    ) -> str:
+        lines = [
+            "Incident Action Update",
+            "",
+            f"Scenario: {execution.scenario_title} ({execution.scenario_code})",
+            f"Status: {status_label}",
+            f"Requested: {execution.created_at}",
+        ]
+        if execution.executed_at:
+            lines.append(f"Updated: {execution.executed_at}")
+        lines.append("")
+        lines.append("Actions:")
+        for action in execution.actions:
+            lines.append(f"- {action}")
+
+        if execution.results:
+            lines.append("")
+            lines.append("Results:")
+            for result in execution.results:
+                detail = f" ({result.detail})" if result.detail else ""
+                lines.append(f"- {result.action}: {result.status}{detail}")
+
+        lines.append("")
+        lines.append("Sent via Incident Response Console MCP notifications.")
+        return "\n".join(lines)
 
 
 def serialize_scenario(scenario: Optional[AlertScenario]) -> Optional[Dict[str, object]]:
@@ -329,6 +489,14 @@ def serialize_action_execution(
         "status": execution.status,
         "executed_at": execution.executed_at,
         "results": [serialize_action_result(result) for result in execution.results],
+    }
+
+
+def serialize_email_recipient(recipient: EmailRecipient) -> Dict[str, object]:
+    return {
+        "id": recipient.id,
+        "email": recipient.email,
+        "created_at": recipient.created_at,
     }
 
 
