@@ -1,128 +1,182 @@
-﻿# Incident Response Console
+# Incident Response Console
 
-Electron desktop UI backed by a Python FastAPI service that simulates the first-responder workflow for Prometheus alerts. The app keeps the MVP features from `order.md` (F1-F4): firing a runbook scenario, inspecting hypotheses/evidence, dispatching Slack notifications, and verifying recovery with Prometheus queries.
+Prometheus 알림에 대한 퍼스트 리스폰더 흐름을 시뮬레이션하는 Python FastAPI 백엔드와 Electron 데스크톱 UI입니다. `order.md`의 MVP 기능(F1-F4)인 러너북 시나리오 실행, 가설·증거 확인, Slack 알림 전송, Prometheus 쿼리 기반 복구 검증을 모두 제공합니다.
 
-## Architecture
+## 아키텍처
 
 ```
 src/
-  main.py                         # python -m src.main -> launches FastAPI backend
+  main.py                         # python -m src.main -> FastAPI 백엔드 실행
   backend/
-    app.py                        # FastAPI routes (alerts, Slack, Prometheus)
-    services.py                   # Business logic & shared state helpers
-    state.py                      # In-memory state used by the API
-    main.py                       # uvicorn runner (reads INCIDENT_BACKEND_* env vars)
+    app.py                        # FastAPI 라우트 (alerts, Slack, Prometheus)
+    services.py                   # 비즈니스 로직 및 공유 상태 헬퍼
+    state.py                      # API가 쓰는 인메모리 상태
+    main.py                       # uvicorn 실행기 (INCIDENT_BACKEND_* env 사용)
   incident_console/
-    models.py | scenarios.py      # Core domain models & sample incident scenarios
-    integrations/                 # Slack/Prometheus HTTP clients (requests based)
-    errors.py                     # Shared IntegrationError type
-    utils.py                      # Shared helpers (time format, threshold parsing)
+    models.py | scenarios.py      # 도메인 모델과 샘플 인시던트 시나리오
+    integrations/                 # Slack/Prometheus HTTP 클라이언트(requests 기반)
+    errors.py                     # 공용 IntegrationError 타입
+    utils.py                      # 시간/임계치 파싱 등 헬퍼
 electron/
-  package.json                    # npm metadata (Electron runtime)
-  main.js | preload.js            # Desktop shell + Python backend bootstrapper
-  renderer/                       # HTML/CSS/JS front-end that talks to the API
+  package.json                    # npm 메타데이터 (Electron 런타임)
+  main.js | preload.js            # 데스크톱 셸 + Python 백엔드 부트스트랩
+  renderer/                       # API와 통신하는 HTML/CSS/JS 프런트엔드
 prometheus/
-  README.md                       # Local Prometheus setup & sample metrics feeder
-  sample_metrics_service.py       # Generates deterministic threshold breaches
+  README.md                       # 로컬 Prometheus 설정 & 샘플 메트릭 피더
+  sample_metrics_service.py       # 결정론적 임계치 초과 샘플러
 scripts/
-  setup_env.py                    # Creates venv and installs Python dependencies
+  setup_env.py                    # venv 생성 및 Python 의존성 설치
 ```
 
-## Operator Guides
+## 운영 가이드
 
-- See `SETUP.md` for platform-specific setup, launch, and UI guidance.
+- 플랫폼별 설치/실행/UI 안내는 `SETUP.md`를 참고하세요.
 
-## Prerequisites
+## 사전 준비물
 
 - Python 3.10+
-- Node.js 18+ (Electron runtime)
-- Slack/Prometheus credentials if you want to hit real APIs
-- (Optional) OpenAI API key (OPENAI_API_KEY) to enable AI 기반 사고 분석 보고서를 생성합니다
+- Node.js 18+ (Electron 런타임)
+- 실서비스 연동 시 Slack/Prometheus 자격 증명
+- 선택: OpenAI API 키(`OPENAI_API_KEY`)를 넣으면 AI 기반 한국어 분석/액션 플랜 생성 가능
 
-## Backend setup
+환경 변수(`OPENAI_API_KEY`, 통합 토큰 등)는 프로젝트 루트의 `.env`에 저장해도 됩니다.
 
-```bash
-python -m venv .venv
-./.venv/Scripts/python -m pip install -r requirements.txt  # Windows
-# or
-source .venv/bin/activate && pip install -r requirements.txt  # macOS/Linux
-```
+### 선택: 이메일 알림(MCP)
 
-Configuration values (e.g. `OPENAI_API_KEY`, integration tokens) can still be stored in `.env` at the project root.
-
-### Optional email notifications (MCP)
-
-Set the following environment variables if you want executed/deferred action plans to be emailed to the contacts configured in the UI:
+UI에서 등록한 수신자에게 액션 실행/연기 결과를 메일로 보내려면 다음 환경 변수를 설정하세요.
 
 - `INCIDENT_EMAIL_SMTP_HOST` / `INCIDENT_EMAIL_SMTP_PORT`
 - `INCIDENT_EMAIL_SMTP_USER` / `INCIDENT_EMAIL_SMTP_PASSWORD`
-- `INCIDENT_EMAIL_FROM` (defaults to the SMTP user)
-- `INCIDENT_EMAIL_SMTP_TLS` (`1` to enable STARTTLS, `0` to skip)
+- `INCIDENT_EMAIL_FROM` (미지정 시 SMTP 사용자로 기본값 설정)
+- `INCIDENT_EMAIL_SMTP_TLS` (`1`이면 STARTTLS, `0`이면 비활성)
 
-When these are omitted the MCP email notifier stays disabled for safety.
+값을 비워두면 안전상 이메일 발송 기능은 꺼진 상태로 유지됩니다.
 
-## Electron UI setup
+## Electron UI 설정
 
 ```bash
 cd electron
 npm install
-npm run start  # spawns python -m src.backend.main and opens the desktop window
+npm run start  # python -m src.backend.main을 띄우고 데스크톱 창을 엽니다
 ```
 
-The Electron launcher automatically starts the FastAPI backend (default `http://127.0.0.1:8000`). When you close the desktop window the Python process is stopped as well.
+Electron 런처는 FastAPI 백엔드를 자동으로 시작합니다(기본 `http://127.0.0.1:8000`). 데스크톱 창을 닫으면 Python 프로세스도 함께 종료됩니다.
 
-### Running services independently
+### 서비스 개별 실행
 
-You can also run each layer by hand:
+각 레이어를 따로 띄우고 싶다면:
 
 ```bash
-# Terminal 1 - backend only
+# 터미널 1 - 백엔드만 실행
 python -m src.backend.main
-# Server answers on http://127.0.0.1:8000
+# 서버: http://127.0.0.1:8000
 
-# Terminal 2 - just open the renderer without auto-spawning python
+# 터미널 2 - Python 자동 실행 없이 렌더러만 열기
 cd electron
 INCIDENT_BACKEND_HOST=127.0.0.1 INCIDENT_BACKEND_PORT=8000 npm start
 ```
 
-## Key API routes
+## 주요 API 경로
 
-| Method | Route               | Purpose                              |
-| ------ | ------------------- | ------------------------------------ |
-| POST   | `/alerts/trigger`   | Pick one of the demo scenarios and populate the feed/hypotheses/actions |
-| POST   | `/alerts/verify`    | Run Prometheus instant queries with stored thresholds |
-| POST   | `/slack/test`       | `auth.test` connectivity check       |
-| POST   | `/slack/save`       | Persist Slack defaults in memory     |
-| POST   | `/slack/dispatch`   | Send the most recent scenario to Slack |
-| POST   | `/prometheus/test`  | Run HTTP + CPU queries once          |
-| POST   | `/prometheus/save`  | Persist Prometheus settings          |
-| GET    | `/state`            | Dump current in-memory settings, feed, and last alert |
-| GET    | `/health`           | Liveness probe used by Electron boot |
+| Method | Route               | Purpose                                          |
+| ------ | ------------------- | ------------------------------------------------ |
+| POST   | `/alerts/trigger`   | 데모 시나리오를 골라 피드/가설/액션을 채움        |
+| POST   | `/alerts/verify`    | 저장된 임계치로 Prometheus 즉시 쿼리 실행         |
+| POST   | `/slack/test`       | `auth.test` 연결 확인                             |
+| POST   | `/slack/save`       | Slack 기본값을 메모리에 저장                      |
+| POST   | `/slack/dispatch`   | 마지막 시나리오를 Slack으로 전송                  |
+| POST   | `/prometheus/test`  | HTTP + CPU 쿼리를 1회 실행                        |
+| POST   | `/prometheus/save`  | Prometheus 설정을 저장                            |
+| GET    | `/state`            | 현재 인메모리 설정/피드/최근 알림 덤프            |
+| GET    | `/health`           | Electron 부팅 시 사용하는 라이브니스 체크         |
 
-All responses are JSON; errors use FastAPI Problem Details with `detail` explaining the failure (`IntegrationError` from the original code path is preserved).
+모든 응답은 JSON이며, 오류는 FastAPI Problem Details 형식을 사용하고 `detail`에 실패 원인을 담습니다(원래 코드의 `IntegrationError`를 유지).
 
-## Current behaviour
+## 로컬 Prometheus 환경 (상세)
 
-- Alert triggers still choose from `scenarios.py` and prefill hypotheses/evidence/actions.
-- Slack/Prometheus operations reuse the original `requests` clients, so you can point them at live services.
-- The feed persists in memory while the backend is running; restart clears state.
-- The Electron renderer is now the sole UI surface, featuring a bright monotone-inspired layout tuned for quick operator scans.
-- A background Prometheus monitor samples metrics every few seconds, detects anomalies when at least one of the latest five samples breaches a threshold, and auto-generates incident reports.
-- Notification targets (Slack) can be toggled via checkboxes so operators immediately know which channel will receive the automated report.
-- Additional MCP email recipients can be configured from the settings panel; up to five addresses are shown per page with add/remove controls and paginated history. Action execution results are mailed (when SMTP is configured) only if at least one address exists.
+이 섹션은 `prometheus/README.md`의 내용을 통합한 것입니다. 로컬에서 샘플 메트릭을 제공하고 Prometheus를 실행해 UI를 바로 연결할 수 있습니다.
 
-- When an OpenAI API key is configured, the Prometheus breach path invokes the AI-written Korean analysis/action plan before dispatching to Slack (otherwise a deterministic fallback is used).
+### 구성 요소
 
+```
+prometheus/
+  prometheus.yml           # 로컬 개발용 기본 설정(샘플 메트릭 타깃 포함)
+  sample_metrics_service.py# http_error_rate / cpu_usage를 내보내는 샘플 서버
+  windows_setup.ps1        # Windows용 Prometheus 다운로드/설치 스크립트
+  mac_setup.sh             # macOS용 다운로드/설치 스크립트
+  dist/                    # (자동 생성) 다운로드 받은 원본 압축 파일
+  windows/                 # (자동 생성) Windows용 압축 해제 위치
+  mac/                     # (자동 생성) macOS용 압축 해제 위치
+```
 
-## Next steps
+선행 조건: Python 3.10+, PowerShell 5+ 또는 bash, 인터넷 연결(바이너리 다운로드용).
 
-- Persist state to disk (e.g. sqlite or JSON) so settings survive restarts.
-- Replace global state with dependency-injected stores to ease testing.
-- Add mocked integrations/tests so CI can validate without real credentials.
-- Package the Electron app (electron-builder) once distribution requirements are clear.
+### 1) 샘플 메트릭 서버 실행
 
+```powershell
+# Windows PowerShell
+python -m pip install prometheus-client
+python prometheus\sample_metrics_service.py  # 값이 주기적으로 변동하며 임계치도 넘습니다.
+```
 
+```bash
+# macOS / Linux
+python3 -m pip install prometheus-client
+python3 prometheus/sample_metrics_service.py
+```
 
+- 기본 엔드포인트: `http://127.0.0.1:9001/metrics`
+- `prometheus.yml`에 이미 타깃으로 등록돼 있습니다.
 
+### 2) Prometheus 설치 및 실행
 
+**Windows(검증 대상)**
 
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+./prometheus/windows_setup.ps1 -Version 2.51.0
+
+Set-Location -Path .\prometheus\windows\prometheus-2.51.0.windows-amd64
+./prometheus.exe --config.file="..\..\prometheus.yml" --storage.tsdb.path="..\..\data"
+```
+
+> `--storage.tsdb.path`는 원하는 위치로 바꿀 수 있습니다(예: 프로젝트 루트의 `data/`).
+
+**macOS(참고)**
+
+```bash
+chmod +x prometheus/mac_setup.sh
+./prometheus/mac_setup.sh 2.51.0
+
+cd prometheus/mac/prometheus-2.51.0.darwin-amd64
+./prometheus --config.file="../../prometheus.yml" --storage.tsdb.path="../../data"
+```
+
+### 3) 콘솔에서 Prometheus 연결
+
+Electron UI의 **Prometheus** 탭에 아래 값을 넣고 `Save` / `Test`를 눌러 확인합니다.
+
+- Base URL: `http://127.0.0.1:9090`
+- HTTP Error Query: `http_error_rate`
+- HTTP Threshold: `0.05`
+- CPU Usage Query: `cpu_usage`
+- CPU Threshold: `0.80`
+
+샘플 메트릭 서버가 값을 갱신하므로 `Verify Recovery` 버튼으로 실제 쿼리·임계치 검증을 확인할 수 있습니다.
+
+### 문제 해결
+
+- 포트 충돌: 샘플 서버(9001)나 Prometheus(9090)가 이미 점유 중이면 스크립트/설정에서 포트를 바꿉니다.
+- 다운로드 차단: 바이너리를 미리 받아 `prometheus/dist/`에 두고 압축 해제 단계만 수행하세요.
+- 인증서/프록시: 회사 네트워크 제약이 있으면 `Invoke-WebRequest`(Windows)나 `curl`(macOS)에 프록시 옵션을 추가해 사용하세요.
+
+## 현재 동작
+
+- 알림 트리거는 여전히 `scenarios.py`에서 시나리오를 선택해 가설/증거/액션을 채웁니다.
+- Slack/Prometheus 연동은 기존 `requests` 기반 클라이언트를 그대로 사용하므로 실서비스로 포인팅할 수 있습니다.
+- 백엔드가 살아있는 동안 피드는 인메모리에 유지되며, 재시작 시 초기화됩니다.
+- Electron 렌더러가 유일한 UI이며, 빠른 훑어보기를 위한 밝은 모노톤 스타일을 사용합니다.
+- 백그라운드 Prometheus 모니터가 몇 초 간격으로 샘플링하고, 최근 5개 중 하나라도 임계치 초과 시 이상을 감지해 인시던트 리포트를 자동 생성합니다.
+- 체크박스로 Slack 등 알림 대상을 토글해 자동 보고가 어느 채널로 갈지 바로 확인할 수 있습니다.
+- 설정 패널에서 MCP 이메일 수신자를 추가/삭제할 수 있고, 페이지당 최대 5개 주소와 페이징된 히스토리를 제공합니다. SMTP가 설정되어 있고 주소가 하나 이상 있을 때만 액션 실행 결과를 메일로 보냅니다.
+- OpenAI API 키가 설정되면 Prometheus 이상 징후 시 Slack 전송 전에 AI가 작성한 한국어 분석/액션 플랜을 사용하고, 없으면 결정론적 텍스트를 사용합니다.
